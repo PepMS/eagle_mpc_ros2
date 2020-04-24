@@ -6,13 +6,14 @@
 
 #include <Eigen/Dense>
 
-#include <px4_msgs/msg/vehicle_control_mode.hpp>
-#include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <px4_msgs/msg/actuator_outputs.hpp>
-#include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/vehicle_attitude.hpp>
 #include <px4_msgs/msg/vehicle_angular_velocity.hpp>
+#include <px4_msgs/msg/vehicle_control_mode.hpp>
+#include <px4_msgs/msg/offboard_control_mode.hpp>
+#include <px4_msgs/msg/actuator_outputs.hpp>
+
+#include <px4_ros_com/frame_transforms.h>
 
 class MpcRunner
 {
@@ -23,11 +24,10 @@ private:
   // Node handler
   rclcpp::Node::SharedPtr node_;
   // State subscribers
-  rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_posistion_subs_;
-  rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr local_attitude_subs_;
-  rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr local_ang_velocity_subs_;  
-
-  rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr odometry_subs_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;  
+  // Other subscribers
   rclcpp::Subscription<px4_msgs::msg::VehicleControlMode>::SharedPtr ctrl_mode_subs_;
   
   // Publishers
@@ -39,7 +39,6 @@ private:
   void vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::UniquePtr msg);
   void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::UniquePtr msg);
   
-  void odometryCallback(const px4_msgs::msg::VehicleOdometry::UniquePtr msg);
   void vehicleCtrlModeCallback(const px4_msgs::msg::VehicleControlMode::UniquePtr msg);
 
   // Publishers timer callback
@@ -50,6 +49,9 @@ private:
   
   // Class variables
   Eigen::VectorXd state_;
+  Eigen::Vector3d vel_ned_;
+  Eigen::Vector3d vel_body_ned_;
+  Eigen::Quaterniond q_body_ned_;
   bool offboard_mode_enabled_;
   px4_msgs::msg::OffboardControlMode offboard_mode_msg_;
   px4_msgs::msg::ActuatorOutputs actuator_outputs_msg_;

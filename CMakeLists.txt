@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(px4_ros_com REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -31,7 +32,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(include ${EIGEN3_INCLUDE_DIR})
 
 add_executable(mpc_runner src/main.cpp src/mpc_runner.cpp) 
-ament_target_dependencies(mpc_runner rclcpp px4_msgs)
+ament_target_dependencies(mpc_runner rclcpp px4_msgs px4_ros_com)
 
 
 
