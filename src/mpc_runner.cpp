@@ -26,6 +26,7 @@ MpcRunner::MpcRunner(rclcpp::Node::SharedPtr node) : node_(node)
   // offboard_mode_msg_.ignore_alt_hold = true;
   offboard_mode_msg_.ignore_mixed_outputs = true;
 
+  state_ = Eigen::VectorXd::Zero(13);
 }
 
 void MpcRunner::odometryCallback(const px4_msgs::msg::VehicleOdometry::UniquePtr msg) {
