@@ -12,12 +12,20 @@
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/actuator_outputs.hpp>
+#include <px4_msgs/msg/position_setpoint_triplet.hpp>
+#include <px4_msgs/msg/timesync.hpp>
 
 #include <px4_ros_com/frame_transforms.h>
+
+// #include "yaml_parser/parser_yaml.hpp"
+// #include "yaml_parser/params_server.hpp"
+#include "multicopter_mpc/mpc-main.hpp"
+
 
 class MpcRunner
 {
 public:
+
 explicit MpcRunner(rclcpp::Node::SharedPtr node);
 
 private:
@@ -46,16 +54,25 @@ private:
   
   // Timer publishers
   rclcpp::TimerBase::SharedPtr actuator_outputs_timer_;
-  
+
+  // MPC related
+  multicopter_mpc::MpcMain mpc_main_;
+  // multicopter_mpc::ProblemMission pmission_;
+
   // Class variables
   Eigen::VectorXd state_;
   Eigen::Vector3d vel_ned_;
-  Eigen::Vector3d vel_body_ned_;
-  Eigen::Quaterniond q_body_ned_;
+  Eigen::Vector3d vel_frd_;
+  Eigen::Quaterniond q_ned_frd_;
+  Eigen::Quaterniond q_nwu_flu_;
   bool offboard_mode_enabled_;
   px4_msgs::msg::OffboardControlMode offboard_mode_msg_;
   px4_msgs::msg::ActuatorOutputs actuator_outputs_msg_;
+  px4_msgs::msg::PositionSetpointTriplet position_setpoint_triplet_msg_;
 
+  // Transformation tools
+  const Eigen::Quaterniond FRD_FLU_Q = px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
+  const Eigen::Quaterniond NWU_NED_Q = px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
 
 };
 

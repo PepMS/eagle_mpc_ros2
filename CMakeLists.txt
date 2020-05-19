@@ -26,13 +26,16 @@ find_package(px4_ros_com REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+SET(MULTICOPTER_MPC_INCLUDE_DIRS /usr/local/include/multicopter_mpc/)
+SET(MULTICOPTER_MPC_LIB /usr/local/lib/libmulticopter_mpc.so)
+
 #################
 # Setup targets #
 #################
 include_directories(include ${EIGEN3_INCLUDE_DIR})
-
 add_executable(mpc_runner src/main.cpp src/mpc_runner.cpp) 
 ament_target_dependencies(mpc_runner rclcpp px4_msgs px4_ros_com)
+target_link_libraries(mpc_runner ${MULTICOPTER_MPC_LIB})
 
 
 
