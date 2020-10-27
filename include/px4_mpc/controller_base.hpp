@@ -17,11 +17,17 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
+struct ControllerType {
+  enum Type {MpcController, ExampleController, NbControllerTypes};
+};
+
 class ControllerAbstract
 {
 public:
   explicit ControllerAbstract(rclcpp::Node::SharedPtr node);
   virtual ~ControllerAbstract();
+
+  static std::shared_ptr<ControllerAbstract> createController(const ControllerType::Type& controller_type, rclcpp::Node::SharedPtr node);
 protected:
   // Node handler
   rclcpp::Node::SharedPtr node_;
@@ -50,10 +56,10 @@ protected:
   rclcpp::TimerBase::SharedPtr actuator_direct_control_timer_;
 
   // Class variables
-  Eigen::VectorXd state_;
+  Eigen::VectorXd state_; // local pos in inertial frame (NWU), quaternion, lin. velocity and ang. velocity in FLU base frame
   Eigen::Vector3d vel_ned_;
   Eigen::Vector3d vel_frd_;
-  Eigen::Vector3d actuator_normalized_;
+  Eigen::Vector4d actuator_normalized_;
   Eigen::Quaterniond q_ned_frd_;
   Eigen::Quaterniond q_nwu_flu_;
   bool motor_control_mode_enabled_;

@@ -8,3 +8,5 @@ MpcRunner::MpcRunner(rclcpp::Node::SharedPtr node) : ControllerAbstract(node)
 }
 
 MpcRunner::~MpcRunner() {}
+
+
