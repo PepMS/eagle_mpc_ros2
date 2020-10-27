@@ -17,7 +17,7 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
-#include "multicopter_mpc/mpc-main.hpp"
+// #include "multicopter_mpc/mpc-main.hpp"
 
 class MpcRunner
 {
@@ -53,7 +53,7 @@ private:
   rclcpp::TimerBase::SharedPtr actuator_direct_control_timer_;
 
   // MPC related
-  multicopter_mpc::MpcMain mpc_main_;
+  // multicopter_mpc::MpcMain mpc_main_;
 
   // Class variables
   Eigen::VectorXd state_;

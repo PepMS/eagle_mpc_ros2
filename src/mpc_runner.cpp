@@ -20,13 +20,13 @@ MpcRunner::MpcRunner(rclcpp::Node::SharedPtr node) : node_(node)
   vel_ned_ = Eigen::Vector3d::Zero(3);
   actuator_normalized_ = Eigen::Vector3d::Zero(4);
 
-  mpc_main_ = multicopter_mpc::MpcMain(multicopter_mpc::MultiCopterTypes::Iris, multicopter_mpc::MissionTypes::Hover, multicopter_mpc::SolverTypes::BoxFDDP);
+  // mpc_main_ = multicopter_mpc::MpcMain(multicopter_mpc::MultiCopterTypes::Iris, multicopter_mpc::MissionTypes::Hover, multicopter_mpc::SolverTypes::BoxFDDP);
 }
 
 void MpcRunner::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPositionGroundtruth::UniquePtr msg)
 {
   // In Crocoddyl the local inertial frame is NWU
-  // Position in the intertial frame
+  // Position in the inertial frame
   state_(0) = msg->x;
   state_(1) = -msg->y;
   state_(2) = -msg->z;
@@ -56,27 +56,27 @@ void MpcRunner::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngul
   state_(10) = msg->xyz[0];
   state_(11) = -msg->xyz[1];
   state_(12) = -msg->xyz[2];
-  std::cout << "This is the state: " << std::endl
-            << state_ << std::endl;
-  mpc_main_.setInitialState(state_);
-  mpc_main_.solve();
+  // std::cout << "This is the state: " << std::endl
+  //           << state_ << std::endl;
+  // mpc_main_.setInitialState(state_);
+  // mpc_main_.solve();
   publishControls();
-  std::cout << "Control output: \n"
-            << mpc_main_.getActuatorControlsNormalized() << std::endl;
+  // std::cout << "Control output: \n"
+  //           << mpc_main_.getActuatorControlsNormalized() << std::endl;
 }
 
 void MpcRunner::vehicleCtrlModeCallback(const px4_msgs::msg::VehicleControlMode::UniquePtr msg)
 {
-  offboard_mode_enabled_ = msg->flag_control_offboard_enabled;
+  offboard_mode_enabled_ = msg->flag_control_motors_enabled;
   if (offboard_mode_enabled_)
-    std::cout << "Offboard mode enabled" << std::endl;
+    std::cout << "Direct control enabled!" << std::endl;
 }
 
 void MpcRunner::pubActuatorOutputsTimerCallback()
 {
   std::cout << "Publishing inside timer" << std::endl;
   actuator_direct_control_msg_.timestamp = (uint64_t)std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
-  actuator_normalized_ = mpc_main_.getActuatorControlsNormalized();
+  // actuator_normalized_ = mpc_main_.getActuatorControlsNormalized();
 
   actuator_direct_control_msg_.output[0] = actuator_normalized_(0);
   actuator_direct_control_msg_.output[1] = actuator_normalized_(1);
@@ -88,7 +88,7 @@ void MpcRunner::pubActuatorOutputsTimerCallback()
 void MpcRunner::publishControls()
 {
   actuator_direct_control_msg_.timestamp = (uint64_t)std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
-  actuator_normalized_ = mpc_main_.getActuatorControlsNormalized();
+  // actuator_normalized_ = mpc_main_.getActuatorControlsNormalized();
 
   actuator_direct_control_msg_.output[0] = actuator_normalized_(0);
   actuator_direct_control_msg_.output[1] = actuator_normalized_(1);
