@@ -1,4 +1,5 @@
 # PX4 Model Predictive Control
+
 This repo was initially considered to implement an MPC controller along with PX4 firmware (hence its name).
 However, this has evolved to the more general case where any controller outputting motor thrusts (or motor speed) can be implemented.
 
@@ -53,4 +54,4 @@ Then
 
 ## Creating your own controller
 
-See the given example code: `example_controller.cpp`
+See the given example code: `example_controller.cpp
