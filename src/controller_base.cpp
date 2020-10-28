@@ -69,7 +69,6 @@ void ControllerAbstract::vehicleCtrlModeCallback(const px4_msgs::msg::VehicleCon
 
 void ControllerAbstract::pubActuatorOutputsTimerCallback()
 {
-  RCLCPP_INFO(node_->get_logger(), "Publishing");
   publishControls();
 }
 
@@ -81,6 +80,7 @@ void ControllerAbstract::publishControls()
   actuator_direct_control_msg_.output[1] = actuator_normalized_(1);
   actuator_direct_control_msg_.output[2] = actuator_normalized_(2);
   actuator_direct_control_msg_.output[3] = actuator_normalized_(3);
+  
   actuator_direct_control_pub_->publish(actuator_direct_control_msg_);
 }
 

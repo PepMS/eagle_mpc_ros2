@@ -54,17 +54,21 @@ protected:
 
   // Timer publishers
   rclcpp::TimerBase::SharedPtr actuator_direct_control_timer_;
+  
+  // Message to publish motor commands
+  px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
 
   // Class variables
   Eigen::VectorXd state_; // local pos in inertial frame (NWU), quaternion, lin. velocity and ang. velocity in FLU base frame
   Eigen::Vector3d vel_ned_;
   Eigen::Vector3d vel_frd_;
-  Eigen::Vector4d actuator_normalized_;
   Eigen::Quaterniond q_ned_frd_;
   Eigen::Quaterniond q_nwu_flu_;
+  
+  // Motor speed commands in range [-1, 1]
+  Eigen::Vector4d actuator_normalized_; 
   bool motor_control_mode_enabled_;
 
-  px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
 
   // Transformation tools
   const Eigen::Quaterniond FRD_FLU_Q = px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);

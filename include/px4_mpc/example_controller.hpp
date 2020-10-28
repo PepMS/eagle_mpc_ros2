@@ -9,7 +9,13 @@ public:
   explicit ExampleController(rclcpp::Node::SharedPtr node);
   virtual ~ExampleController();
 
+  void writeControls();
+
+  rclcpp::TimerBase::SharedPtr timer_;
+
 private:
+  std::size_t counter_;
+  std::size_t motor_idx_;
 };
 
 #endif
