@@ -20,17 +20,24 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(px4_ros_com REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+SET(MULTICOPTER_MPC_INCLUDE_DIRS /usr/local/include/multicopter_mpc/)
+SET(MULTICOPTER_MPC_LIB /usr/local/lib/libmulticopter_mpc.so)
+
+file(GLOB_RECURSE PX4_MPC_SOURCES *.cpp)
+
 #################
 # Setup targets #
 #################
-include_directories(include)
-
-add_executable(mpc_runner src/main.cpp src/mpc_runner.cpp) 
-ament_target_dependencies(mpc_runner rclcpp px4_msgs)
+include_directories(include ${EIGEN3_INCLUDE_DIR})
+add_executable(px4_controller ${PX4_MPC_SOURCES}) 
+ament_target_dependencies(px4_controller rclcpp px4_msgs px4_ros_com)
+target_link_libraries(px4_controller ${MULTICOPTER_MPC_LIB})
 
 
 
