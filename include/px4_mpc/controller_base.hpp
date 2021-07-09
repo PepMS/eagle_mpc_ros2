@@ -41,6 +41,7 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
+
 struct ControllerType {
   enum Type {MpcController, ExampleController, NbControllerTypes};
 };
