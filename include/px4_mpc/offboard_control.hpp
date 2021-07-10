@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <chrono>
+#include <vector>
 
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -20,10 +21,13 @@ private:
   rclcpp::Node::SharedPtr node_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_wp_;
 
   std::atomic<uint64_t> timestamp_; //!< common synced timestamped
   std::size_t offboard_setpoint_counter_;
 
+  std::vector<px4_msgs::msg::TrajectorySetpoint> waypoints_;
+  std::size_t waypoint_active_;
   // pubs
   rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
   rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
@@ -35,6 +39,7 @@ private:
   // callbacks
   void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
   void timerCallback();
+  void timerWpCallback();
 
   // methods
   void arm() const;

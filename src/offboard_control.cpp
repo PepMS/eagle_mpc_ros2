@@ -12,6 +12,35 @@ OffboardControl::OffboardControl(rclcpp::Node::SharedPtr node) : node_(node)
 
   offboard_setpoint_counter_ = 0;
   timer_ = node_->create_wall_timer(100ms, std::bind(&OffboardControl::timerCallback, this));
+  timer_wp_ = node_->create_wall_timer(5s, std::bind(&OffboardControl::timerWpCallback, this));
+
+  // Load wps
+  px4_msgs::msg::TrajectorySetpoint wp;
+  wp.x = 0;
+  wp.y = 0;
+  wp.z = -2;
+  wp.yaw = 0;
+  waypoints_.push_back(wp);
+
+  wp.x = 1;
+  wp.y = 0;
+  wp.z = -2;
+  wp.yaw = 0;
+  waypoints_.push_back(wp);
+
+  wp.x = 1;
+  wp.y = -1;
+  wp.z = -2;
+  wp.yaw = 0;
+  waypoints_.push_back(wp);
+
+  wp.x = 0;
+  wp.y = -1;
+  wp.z = -2;
+  wp.yaw = 0;
+  waypoints_.push_back(wp);
+
+  waypoint_active_ = 0;
 }
 
 OffboardControl::~OffboardControl() {}
@@ -41,6 +70,12 @@ void OffboardControl::timerCallback()
   {
     offboard_setpoint_counter_++;
   }
+}
+
+void OffboardControl::timerWpCallback()
+{
+  waypoint_active_++;
+  waypoint_active_ = waypoint_active_ == waypoints_.size() ? waypoints_.size() - 1 : waypoint_active_;
 }
 
 void OffboardControl::arm() const
@@ -74,10 +109,10 @@ void OffboardControl::publish_trajectory_setpoint() const
 {
   px4_msgs::msg::TrajectorySetpoint msg{};
   msg.timestamp = timestamp_.load();
-  msg.x = 0.0;
-  msg.y = 0.0;
-  msg.z = -5.0;
-  msg.yaw = -3.14; // [-PI:PI]
+  msg.x = waypoints_[waypoint_active_].x;
+  msg.y = waypoints_[waypoint_active_].y;
+  msg.z = waypoints_[waypoint_active_].z;
+  msg.yaw = waypoints_[waypoint_active_].yaw; // [-PI:PI]
 
   trajectory_setpoint_publisher_->publish(msg);
 }
