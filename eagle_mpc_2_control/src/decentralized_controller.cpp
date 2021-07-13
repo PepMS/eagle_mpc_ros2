@@ -12,31 +12,34 @@ DecentralizedController::DecentralizedController(rclcpp::Node::SharedPtr node) :
 
   offboard_setpoint_counter_ = 0;
   timer_ = node_->create_wall_timer(100ms, std::bind(&DecentralizedController::timerCallback, this));
-  timer_wp_ = node_->create_wall_timer(5s, std::bind(&DecentralizedController::timerWpCallback, this));
 
-  // Load wps
+  local_position_subs_ = node_->create_subscription<px4_msgs::msg::VehicleLocalPosition>(
+      "VehicleLocalPosition_PubSubTopic", 10,
+      std::bind(&DecentralizedController::vehicleLocalPositionCallback, this, std::placeholders::_1));
+
+  // Load wps (stored in NWU)
   px4_msgs::msg::TrajectorySetpoint wp;
   wp.x = 0;
   wp.y = 0;
-  wp.z = -2;
+  wp.z = 2;
   wp.yaw = 0;
   waypoints_.push_back(wp);
 
   wp.x = 1;
   wp.y = 0;
-  wp.z = -2;
+  wp.z = 2;
   wp.yaw = 0;
   waypoints_.push_back(wp);
 
   wp.x = 1;
-  wp.y = -1;
-  wp.z = -2;
+  wp.y = 1;
+  wp.z = 2;
   wp.yaw = 0;
   waypoints_.push_back(wp);
 
   wp.x = 0;
-  wp.y = -1;
-  wp.z = -2;
+  wp.y = 1;
+  wp.z = 2;
   wp.yaw = 0;
   waypoints_.push_back(wp);
 
@@ -67,11 +70,6 @@ void DecentralizedController::timerCallback() {
   }
 }
 
-void DecentralizedController::timerWpCallback() {
-  waypoint_active_++;
-  waypoint_active_ = waypoint_active_ == waypoints_.size() ? waypoints_.size() - 1 : waypoint_active_;
-}
-
 void DecentralizedController::arm() const {
   publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
 
@@ -82,6 +80,21 @@ void DecentralizedController::disarm() const {
   publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
 
   RCLCPP_INFO(node_->get_logger(), "Disarm command send");
+}
+
+void DecentralizedController::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg) {
+  StatePubSub::vehicleLocalPositionCallback(msg);
+
+  Eigen::Vector3d pos_des;
+  Eigen::Vector3d pos_err;
+
+  pos_des << waypoints_[waypoint_active_].x, waypoints_[waypoint_active_].y, waypoints_[waypoint_active_].z;
+  pos_err = pos_des - state_.head(3);
+
+  if (pos_err.norm() < 0.05 && waypoint_active_ < waypoints_.size() - 1) {
+    waypoint_active_++;
+    RCLCPP_INFO(node_->get_logger(), "Waypoint %d activated", waypoint_active_);
+  }
 }
 
 void DecentralizedController::publish_offboard_control_mode() const {
@@ -98,10 +111,12 @@ void DecentralizedController::publish_offboard_control_mode() const {
 
 void DecentralizedController::publish_trajectory_setpoint() const {
   px4_msgs::msg::TrajectorySetpoint msg{};
+
+  // Waypoints must be in NED
   msg.timestamp = timestamp_.load();
   msg.x = waypoints_[waypoint_active_].x;
-  msg.y = waypoints_[waypoint_active_].y;
-  msg.z = waypoints_[waypoint_active_].z;
+  msg.y = -waypoints_[waypoint_active_].y;
+  msg.z = -waypoints_[waypoint_active_].z;
   msg.yaw = waypoints_[waypoint_active_].yaw;  // [-PI:PI]
 
   trajectory_setpoint_publisher_->publish(msg);
