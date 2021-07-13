@@ -26,6 +26,7 @@ find_package(Eigen3 REQUIRED)
 find_package(px4_ros_com REQUIRED)
 find_package(eagle_mpc_2_msgs REQUIRED)
 
+set(EAGLE_MPC_2_TOOLS_SRC src/state_pub_sub.cpp)
 set(DECENTRALIZED_CONTROL_SRC src/decentralized_controller.cpp)
 
 # file(GLOB_RECURSE PX4_MPC_SOURCES *.cpp)
@@ -34,6 +35,9 @@ set(DECENTRALIZED_CONTROL_SRC src/decentralized_controller.cpp)
 # Setup targets #
 #################
 include_directories(include ${EIGEN3_INCLUDE_DIR})
+
+add_library(eagle_mpc_2_tools ${EAGLE_MPC_2_TOOLS_SRC})
+ament_target_dependencies(eagle_mpc_2_tools rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
 
 add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC}) 
 ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
