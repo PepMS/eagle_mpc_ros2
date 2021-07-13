@@ -22,22 +22,23 @@
 #include "eagle_interfaces/msg/platform_state.hpp"
 
 // Transformation tools
-const Eigen::Quaterniond FRD_FLU_Q = px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
-const Eigen::Quaterniond NWU_NED_Q = px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
+const Eigen::Quaterniond FRD_FLU_Q =
+    px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
+const Eigen::Quaterniond NWU_NED_Q =
+    px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
 
-class OffboardControl
-{
-public:
+class OffboardControl {
+ public:
   explicit OffboardControl(rclcpp::Node::SharedPtr node);
   virtual ~OffboardControl();
 
-private:
+ private:
   rclcpp::Node::SharedPtr node_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_wp_;
 
-  std::atomic<uint64_t> timestamp_; //!< common synced timestamped
+  std::atomic<uint64_t> timestamp_;  //!< common synced timestamped
   std::size_t offboard_setpoint_counter_;
 
   std::vector<px4_msgs::msg::TrajectorySetpoint> waypoints_;
@@ -56,7 +57,8 @@ private:
   rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;
 
   // Class variables
-  Eigen::VectorXd state_; // local pos in inertial frame (NWU), quaternion (x,y,z,w. From FLU to NWU), lin. velocity and ang. velocity (FLU base frame)
+  Eigen::VectorXd state_;  // local pos in inertial frame (NWU), quaternion (x,y,z,w. From FLU to NWU), lin. velocity
+                           // and ang. velocity (FLU base frame)
   Eigen::Vector3d vel_ned_;
   Eigen::Vector3d vel_frd_;
   Eigen::Quaterniond q_ned_frd_;
