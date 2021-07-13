@@ -84,7 +84,7 @@ protected:
   px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
 
   // Class variables
-  Eigen::VectorXd state_; // local pos in inertial frame (NWU), quaternion, lin. velocity and ang. velocity in FLU base frame
+  Eigen::VectorXd state_; // local pos in inertial frame (NWU), quaternion (from FLU to NWU), lin. velocity and ang. velocity (FLU base frame)
   Eigen::Vector3d vel_ned_;
   Eigen::Vector3d vel_frd_;
   Eigen::Quaterniond q_ned_frd_;
