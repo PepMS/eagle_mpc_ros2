@@ -41,7 +41,7 @@ ament_target_dependencies(eagle_mpc_2_tools rclcpp px4_msgs px4_ros_com eagle_mp
 
 add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC}) 
 ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
-# target_link_libraries(px4_controller ${MULTICOPTER_MPC_LIB})
+target_link_libraries(decentralized_control eagle_mpc_2_tools)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
