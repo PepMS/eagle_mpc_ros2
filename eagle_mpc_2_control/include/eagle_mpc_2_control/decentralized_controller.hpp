@@ -19,7 +19,7 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
-#include "eagle_interfaces/msg/platform_state.hpp"
+#include "eagle_mpc_2_msgs/msg/platform_state.hpp"
 
 // Transformation tools
 const Eigen::Quaterniond FRD_FLU_Q =
@@ -27,10 +27,10 @@ const Eigen::Quaterniond FRD_FLU_Q =
 const Eigen::Quaterniond NWU_NED_Q =
     px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
 
-class OffboardControl {
+class DecentralizedController {
  public:
-  explicit OffboardControl(rclcpp::Node::SharedPtr node);
-  virtual ~OffboardControl();
+  explicit DecentralizedController(rclcpp::Node::SharedPtr node);
+  virtual ~DecentralizedController();
 
  private:
   rclcpp::Node::SharedPtr node_;
@@ -48,7 +48,7 @@ class OffboardControl {
   rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
   rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_publisher_;
-  rclcpp::Publisher<eagle_interfaces::msg::PlatformState>::SharedPtr platform_state_publisher_;
+  rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
 
   // subs
   rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
@@ -82,6 +82,6 @@ class OffboardControl {
   void publish_platform_state();
 
   // msgs
-  eagle_interfaces::msg::PlatformState platform_state_msg_;
+  eagle_mpc_2_msgs::msg::PlatformState platform_state_msg_;
 };
 #endif
