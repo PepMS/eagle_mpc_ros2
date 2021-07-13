@@ -41,21 +41,23 @@ class StatePubSub {
   Eigen::Quaterniond q_ned_frd_;
   Eigen::Quaterniond q_nwu_flu_;
 
- private:
-  // pubs
-  rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
-
   // subs
-  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
   rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
   rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;
   rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;
 
+  virtual void vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
+  virtual void vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::SharedPtr msg);
+  virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
+
+ private:
+  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
+  
   // State subscribers callbacks
-  void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
-  void vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::UniquePtr msg);
-  void vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::UniquePtr msg);
-  void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::UniquePtr msg);
+  virtual void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
+
+  // pubs
+  rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
 
   // methods
   void publish_platform_state();

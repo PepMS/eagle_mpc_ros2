@@ -27,7 +27,7 @@ StatePubSub::~StatePubSub() {}
 
 void StatePubSub::timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg) { timestamp_.store(msg->timestamp); }
 
-void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::UniquePtr msg) {
+void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg) {
   // We use the local inertial frame: NWU
   // Position in the inertial frame
   state_(0) = msg->x;
@@ -44,7 +44,7 @@ void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocal
   state_(9) = -vel_frd_(2);
 }
 
-void StatePubSub::vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::UniquePtr msg) {
+void StatePubSub::vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::SharedPtr msg) {
   q_ned_frd_ = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(msg->q);
   q_nwu_flu_ = NWU_NED_Q * q_ned_frd_ * FRD_FLU_Q;
   state_(3) = q_nwu_flu_.x();
@@ -53,7 +53,7 @@ void StatePubSub::vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::
   state_(6) = q_nwu_flu_.w();
 }
 
-void StatePubSub::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::UniquePtr msg) {
+void StatePubSub::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg) {
   state_(10) = msg->xyz[0];
   state_(11) = -msg->xyz[1];
   state_(12) = -msg->xyz[2];
