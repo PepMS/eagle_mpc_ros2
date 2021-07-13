@@ -2,12 +2,10 @@
 
 using namespace std::chrono_literals;
 
-StatePubSub::StatePubSub(rclcpp::Node::SharedPtr node, const bool& sub, const bool& pub) : node_(node) {
-  if (!sub && !pub) {
-    // throw error if both are false
+StatePubSub::StatePubSub(rclcpp::Node::SharedPtr node, const bool& pub) : node_(node), pub_enabled_(pub) {
+  if (pub_enabled_) {
+    platform_state_publisher_ = node_->create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 10);
   }
-
-  platform_state_publisher_ = node_->create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 10);
 
   timesync_sub_ = node_->create_subscription<px4_msgs::msg::Timesync>(
       "Timesync_PubSubTopic", 10, std::bind(&StatePubSub::timeSyncCallback, this, std::placeholders::_1));
@@ -27,9 +25,7 @@ StatePubSub::StatePubSub(rclcpp::Node::SharedPtr node, const bool& sub, const bo
 
 StatePubSub::~StatePubSub() {}
 
-void StatePubSub::timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg) {
-  timestamp_.store(msg->timestamp);
-}
+void StatePubSub::timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg) { timestamp_.store(msg->timestamp); }
 
 void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::UniquePtr msg) {
   // We use the local inertial frame: NWU
@@ -84,5 +80,8 @@ void StatePubSub::publish_platform_state() {
   platform_state_msg_.motion.angular.y = state_(11);
   platform_state_msg_.motion.angular.z = state_(12);
 
-  platform_state_publisher_->publish(platform_state_msg_);
+  if (pub_enabled_) {
+    platform_state_publisher_->publish(platform_state_msg_);
+  }
+  
 }

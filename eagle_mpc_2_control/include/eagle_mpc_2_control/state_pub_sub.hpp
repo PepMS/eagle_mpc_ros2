@@ -25,22 +25,13 @@ const Eigen::Quaterniond NWU_NED_Q =
 
 class StatePubSub {
  public:
-  explicit StatePubSub(rclcpp::Node::SharedPtr node, const bool& sub = true, const bool& pub = true);
+  explicit StatePubSub(rclcpp::Node::SharedPtr node, const bool& pub = true);
   virtual ~StatePubSub();
 
  protected:
   rclcpp::Node::SharedPtr node_;
 
   std::atomic<uint64_t> timestamp_;  //!< common synced timestamped
-
-  // pubs
-  rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
-
-  // subs
-  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
-  rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
-  rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;
-  rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;
 
   // Class variables
   Eigen::VectorXd state_;  // local pos in inertial frame (NWU), quaternion (x,y,z,w. From FLU to NWU), lin. velocity
@@ -49,6 +40,16 @@ class StatePubSub {
   Eigen::Vector3d vel_frd_;
   Eigen::Quaterniond q_ned_frd_;
   Eigen::Quaterniond q_nwu_flu_;
+
+ private:
+  // pubs
+  rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
+
+  // subs
+  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;
+  rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;
 
   // State subscribers callbacks
   void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
@@ -61,5 +62,7 @@ class StatePubSub {
 
   // msgs
   eagle_mpc_2_msgs::msg::PlatformState platform_state_msg_;
+
+  bool pub_enabled_;
 };
 #endif
