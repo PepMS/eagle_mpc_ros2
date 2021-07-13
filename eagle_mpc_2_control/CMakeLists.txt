@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(px4_mpc)
+project(eagle_mpc_2_control)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -24,25 +24,19 @@ find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(px4_ros_com REQUIRED)
-find_package(eagle_interfaces REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(eagle_mpc_2_msgs REQUIRED)
 
-set(PX4_MPC_OFFBOARD_SRC src/offboard_control.cpp)
+set(DECENTRALIZED_CONTROL_SRC src/decentralized_controller.cpp)
 
-# SET(MULTICOPTER_MPC_INCLUDE_DIRS /usr/local/include/multicopter_mpc/)
-# SET(MULTICOPTER_MPC_LIB /usr/local/lib/libmulticopter_mpc.so)
-
-file(GLOB_RECURSE PX4_MPC_SOURCES *.cpp)
+# file(GLOB_RECURSE PX4_MPC_SOURCES *.cpp)
 
 #################
 # Setup targets #
 #################
 include_directories(include ${EIGEN3_INCLUDE_DIR})
 
-add_executable(px4_offboard_control ${PX4_MPC_OFFBOARD_SRC}) 
-ament_target_dependencies(px4_offboard_control rclcpp px4_msgs px4_ros_com eagle_interfaces)
+add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC}) 
+ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
 # target_link_libraries(px4_controller ${MULTICOPTER_MPC_LIB})
 
 if(BUILD_TESTING)
@@ -57,7 +51,7 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS
-px4_offboard_control
+decentralized_control
 DESTINATION lib/${PROJECT_NAME}
 )
 
