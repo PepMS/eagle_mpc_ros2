@@ -26,8 +26,10 @@ find_package(Eigen3 REQUIRED)
 find_package(px4_ros_com REQUIRED)
 find_package(eagle_mpc_2_msgs REQUIRED)
 
-set(EAGLE_MPC_2_TOOLS_SRC src/state_pub_sub.cpp)
+set(EAGLE_MPC_2_TOOLS_SRC src/state_pub_sub.cpp src/controller_base.cpp)
 set(DECENTRALIZED_CONTROL_SRC src/decentralized_controller.cpp)
+set(MPC_CONTROL_SRC src/mpc_runner.cpp)
+set(MOTOR_TEST_SRC src/motor_test.cpp)
 
 # file(GLOB_RECURSE PX4_MPC_SOURCES *.cpp)
 
@@ -43,6 +45,15 @@ add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC})
 ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
 target_link_libraries(decentralized_control eagle_mpc_2_tools)
 
+# add_executable(mpc_control ${MPC_CONTROL_SRC})
+# ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+# target_link_libraries(decentralized_control eagle_mpc_2_tools)
+
+add_executable(motor_test ${MOTOR_TEST_SRC}) 
+ament_target_dependencies(motor_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+target_link_libraries(motor_test eagle_mpc_2_tools)
+
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -56,7 +67,8 @@ endif()
 
 install(TARGETS
 decentralized_control
-DESTINATION lib/${PROJECT_NAME}
+motor_test
+DESTINATION lib/
 )
 
 ament_package()
