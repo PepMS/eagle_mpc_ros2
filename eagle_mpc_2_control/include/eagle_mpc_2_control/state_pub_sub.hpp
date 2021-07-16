@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <vector>
+#include <mutex>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,17 +24,16 @@ const Eigen::Quaterniond FRD_FLU_Q =
 const Eigen::Quaterniond NWU_NED_Q =
     px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
 
-class StatePubSub {
+class StatePubSub : public rclcpp::Node {
  public:
-  explicit StatePubSub(rclcpp::Node::SharedPtr node, const bool& pub = true);
+  explicit StatePubSub(const std::string& node_name, const bool& pub = true);
   virtual ~StatePubSub();
 
  protected:
-  rclcpp::Node::SharedPtr node_;
-
   std::atomic<uint64_t> timestamp_;  //!< common synced timestamped
 
   // Class variables
+  std::mutex mut_state_;
   Eigen::VectorXd state_;  // local pos in inertial frame (NWU), quaternion (x,y,z,w. From FLU to NWU), lin. velocity
                            // and ang. velocity (FLU base frame)
   Eigen::Vector3d vel_ned_;
@@ -41,19 +41,21 @@ class StatePubSub {
   Eigen::Quaterniond q_ned_frd_;
   Eigen::Quaterniond q_nwu_flu_;
 
+  // Callback groups
+  rclcpp::CallbackGroup::SharedPtr callback_group_loader_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_sender_;
+
+ private:
   // subs
   rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
   rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;
   rclcpp::Subscription<px4_msgs::msg::VehicleAngularVelocity>::SharedPtr angular_velocity_subs_;
+  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
 
+  // State subscribers callbacks
   virtual void vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
   virtual void vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::SharedPtr msg);
   virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
-
- private:
-  rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
-  
-  // State subscribers callbacks
   virtual void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
 
   // pubs
