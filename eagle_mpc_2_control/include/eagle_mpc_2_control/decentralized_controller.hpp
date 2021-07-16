@@ -23,11 +23,12 @@
 
 class DecentralizedController : public StatePubSub {
  public:
-  explicit DecentralizedController(rclcpp::Node::SharedPtr node);
+  explicit DecentralizedController(const std::string& node_name);
   virtual ~DecentralizedController();
 
  private:
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_offboard_;
+  rclcpp::TimerBase::SharedPtr timer_wps_;
 
   std::size_t offboard_setpoint_counter_;
 
@@ -40,8 +41,8 @@ class DecentralizedController : public StatePubSub {
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_publisher_;
 
   // callbacks
-  void timerCallback();
-  virtual void vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg) override;
+  void timerOffboardCallback();
+  void timerWaypointCallback();
 
   // methods
   void arm() const;

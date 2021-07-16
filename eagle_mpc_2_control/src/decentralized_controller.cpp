@@ -2,20 +2,20 @@
 
 using namespace std::chrono_literals;
 
-DecentralizedController::DecentralizedController(rclcpp::Node::SharedPtr node) : StatePubSub(node) {
+DecentralizedController::DecentralizedController(const std::string& node_name) : StatePubSub(node_name) {
+  // publishers
   offboard_control_mode_publisher_ =
-      node_->create_publisher<px4_msgs::msg::OffboardControlMode>("OffboardControlMode_PubSubTopic", 10);
+      create_publisher<px4_msgs::msg::OffboardControlMode>("OffboardControlMode_PubSubTopic", 10);
   trajectory_setpoint_publisher_ =
-      node_->create_publisher<px4_msgs::msg::TrajectorySetpoint>("TrajectorySetpoint_PubSubTopic", 10);
-  vehicle_command_publisher_ =
-      node_->create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 10);
+      create_publisher<px4_msgs::msg::TrajectorySetpoint>("TrajectorySetpoint_PubSubTopic", 10);
+  vehicle_command_publisher_ = create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 10);
 
   offboard_setpoint_counter_ = 0;
-  timer_ = node_->create_wall_timer(100ms, std::bind(&DecentralizedController::timerCallback, this));
 
-  local_position_subs_ = node_->create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-      "VehicleLocalPosition_PubSubTopic", 10,
-      std::bind(&DecentralizedController::vehicleLocalPositionCallback, this, std::placeholders::_1));
+  timer_offboard_ = create_wall_timer(100ms, std::bind(&DecentralizedController::timerOffboardCallback, this),
+                                      callback_group_sender_);
+  timer_wps_ = create_wall_timer(50ms, std::bind(&DecentralizedController::timerWaypointCallback, this),
+                                      callback_group_sender_);
 
   // Load wps (stored in NWU)
   px4_msgs::msg::TrajectorySetpoint wp;
@@ -51,7 +51,7 @@ DecentralizedController::DecentralizedController(rclcpp::Node::SharedPtr node) :
 
 DecentralizedController::~DecentralizedController() {}
 
-void DecentralizedController::timerCallback() {
+void DecentralizedController::timerOffboardCallback() {
   if (offboard_setpoint_counter_ == 10) {
     // Change to Offboard mode after 10 setpoints
     this->publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
@@ -73,27 +73,28 @@ void DecentralizedController::timerCallback() {
 void DecentralizedController::arm() const {
   publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
 
-  RCLCPP_INFO(node_->get_logger(), "Arm command send");
+  RCLCPP_INFO(get_logger(), "Arm command send");
 }
 
 void DecentralizedController::disarm() const {
   publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
 
-  RCLCPP_INFO(node_->get_logger(), "Disarm command send");
+  RCLCPP_INFO(get_logger(), "Disarm command send");
 }
 
-void DecentralizedController::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg) {
-  StatePubSub::vehicleLocalPositionCallback(msg);
-
+void DecentralizedController::timerWaypointCallback() {
   Eigen::Vector3d pos_des;
   Eigen::Vector3d pos_err;
 
   pos_des << waypoints_[waypoint_active_].x, waypoints_[waypoint_active_].y, waypoints_[waypoint_active_].z;
+
+  mut_state_.lock();
   pos_err = pos_des - state_.head(3);
+  mut_state_.unlock();
 
   if (pos_err.norm() < 0.05 && waypoint_active_ < waypoints_.size() - 1) {
     waypoint_active_++;
-    RCLCPP_INFO(node_->get_logger(), "Waypoint %d activated", waypoint_active_);
+    RCLCPP_INFO(get_logger(), "Waypoint %d activated", waypoint_active_);
   }
 }
 
@@ -137,13 +138,14 @@ void DecentralizedController::publish_vehicle_command(uint16_t command, float pa
   vehicle_command_publisher_->publish(msg);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
+  std::shared_ptr<DecentralizedController> controller = std::make_shared<DecentralizedController>("DecentralizedController");
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(controller);
 
-  auto n = rclcpp::Node::make_shared("mpc_runner");
-  std::shared_ptr<DecentralizedController> controller = std::make_shared<DecentralizedController>(n);
-
-  rclcpp::spin(n);
+  executor.spin();
   rclcpp::shutdown();
 
   return 0;
