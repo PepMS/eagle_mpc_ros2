@@ -40,7 +40,7 @@ ControllerAbstract::ControllerAbstract(const std::string& node_name) : StatePubS
       "VehicleControlMode_PubSubTopic", rclcpp::QoS(10),
       std::bind(&ControllerAbstract::vehicleCtrlModeCallback, this, std::placeholders::_1), sub_opt_loader);
 
-  compute_controls_timer_ = create_wall_timer(4ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this),
+  compute_controls_timer_ = create_wall_timer(2.5ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this),
                                               callback_group_sender_);
 
   // Variable initialization

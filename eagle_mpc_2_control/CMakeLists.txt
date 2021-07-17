@@ -45,9 +45,9 @@ add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC})
 ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
 target_link_libraries(decentralized_control eagle_mpc_2_tools)
 
-# add_executable(mpc_control ${MPC_CONTROL_SRC})
-# ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
-# target_link_libraries(decentralized_control eagle_mpc_2_tools)
+add_executable(mpc_control ${MPC_CONTROL_SRC})
+ament_target_dependencies(mpc_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+target_link_libraries(mpc_control eagle_mpc_2_tools)
 
 add_executable(motor_test ${MOTOR_TEST_SRC}) 
 ament_target_dependencies(motor_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
@@ -68,6 +68,7 @@ endif()
 install(TARGETS
 decentralized_control
 motor_test
+mpc_control
 DESTINATION lib/
 )
 

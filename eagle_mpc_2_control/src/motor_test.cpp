@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   std::shared_ptr<MotorTest> controller = std::make_shared<MotorTest>("MotorTest");
   
-  rclcpp::executors::SingleThreadedExecutor executor;
+  rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(controller);
 
   executor.spin();
