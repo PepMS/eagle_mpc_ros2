@@ -25,7 +25,15 @@
 #ifndef EAGLE_MPC_2_CONTROL_MPC_RUNNER_HPP
 #define EAGLE_MPC_2_CONTROL_MPC_RUNNER_HPP
 
+#include <pinocchio/multibody/model.hpp>
+
 #include <px4_msgs/msg/vehicle_command.hpp>
+
+#include "eagle_mpc/trajectory.hpp"
+#include "eagle_mpc/mpc-controllers/carrot-mpc.hpp"
+#include "eagle_mpc/mpc-controllers/rail-mpc.hpp"
+#include "eagle_mpc/mpc-controllers/weighted-mpc.hpp"
+#include "eagle_mpc/mpc-base.hpp"
 
 #include "eagle_mpc_2_control/controller_base.hpp"
 
@@ -35,6 +43,8 @@ class MpcRunner : public ControllerAbstract {
   virtual ~MpcRunner();
 
  private:
+  // ROS2-Node related objects
+
   bool running_controller_;
 
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_publisher_;
@@ -42,14 +52,37 @@ class MpcRunner : public ControllerAbstract {
   std::shared_ptr<rclcpp::ParameterEventHandler> param_subscriber_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> param_callback_handle_;
 
-  void enableControllerCallback(const rclcpp::Parameter& p);
+  // MPC Related Objects
+  struct NodeParams {
+    std::string trajectory_config_path;
+    std::size_t trajectory_dt;
+    eagle_mpc::SolverTypes trajectory_solver;
+    std::string trajectory_integration;
+    bool trajectory_squash;
 
+    std::string mpc_config_path;
+    std::string mpc_type;
+
+  } node_params_;
+
+  boost::shared_ptr<eagle_mpc::Trajectory> trajectory_;
+  boost::shared_ptr<eagle_mpc::MpcAbstract> mpc_controller_;
+
+  void declareParameters();
+  void dumpParameters();
+
+  void enablingProcedure();
+  void disablingProcedure();
+
+  void initializeMpcController();
+  
   void arm() const;
   void disarm() const;
-  void enabling_procedure();
-  void disabling_procedure();
+  void publishVehicleCommand(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
+  
 
-  void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
+
+  void enableControllerCallback(const rclcpp::Parameter& p);
 };
 
 #endif

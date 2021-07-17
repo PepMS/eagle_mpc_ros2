@@ -22,16 +22,14 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////////
 
+#include <iostream>
+
 #include "eagle_mpc_2_control/mpc_runner.hpp"
 
 using namespace std::chrono_literals;
 
 MpcRunner::MpcRunner(const std::string& node_name) : ControllerAbstract(node_name) {
-  declare_parameter<bool>("enable_controller", false);
-
-  param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
-  param_callback_handle_ = param_subscriber_->add_parameter_callback(
-      "enable_controller", std::bind(&MpcRunner::enableControllerCallback, this, std::placeholders::_1));
+  declareParameters();
 
   vehicle_command_publisher_ = create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 10);
 
@@ -40,33 +38,119 @@ MpcRunner::MpcRunner(const std::string& node_name) : ControllerAbstract(node_nam
 
 MpcRunner::~MpcRunner() {}
 
+void MpcRunner::declareParameters() {
+  // Node parameter
+  declare_parameter<bool>("enable_controller", false);
+
+  // Trajectory
+  declare_parameter<std::string>("trajectory_config_path", "");
+  declare_parameter<int>("trajectory_dt", 10);
+  declare_parameter<std::string>("trajectory_solver", "");
+  declare_parameter<std::string>("trajectory_integration", "");
+
+  // Mpc Controller
+  declare_parameter<std::string>("mpc_config_path", "");
+  declare_parameter<std::string>("mpc_type", "");
+
+  // Callbacks
+  param_subscriber_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
+  param_callback_handle_ = param_subscriber_->add_parameter_callback(
+      "enable_controller", std::bind(&MpcRunner::enableControllerCallback, this, std::placeholders::_1));
+}
+
 void MpcRunner::enableControllerCallback(const rclcpp::Parameter& p) {
   bool param = p.as_bool();
   if (param && !running_controller_) {
-    enabling_procedure();
+    enablingProcedure();
   } else if (!param && running_controller_) {
-    disabling_procedure();
+    disablingProcedure();
   }
 }
 
-void MpcRunner::enabling_procedure() {
+void MpcRunner::enablingProcedure() {
   RCLCPP_WARN(get_logger(), "MPC Controller state: ENABLING (Safety Checks)");
-  // here do all safety checks related to the MPC controller configuration
-  // such as to check whether the initial state for the trajectory 
-  //is the same as the current state of the robot
+  // Check
+  // 1. we are receiving the state from the PX4 side
 
-  // If all safety checks are correct, change flihgt mode, arm and start mission
-  actuator_normalized_[0] = -1.0;
-  actuator_normalized_[1] = -1.0;
-  actuator_normalized_[2] = -1.0;
-  actuator_normalized_[3] = 0.5;
-  publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 10); // 10 = PX4_MOTOR_CONTROL_MODE
+  RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Loading Parameters)");
+  dumpParameters();
+
+  initializeMpcController();
+
+  RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Switching to Motor Control Mode & Arming)");
+  publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 10);  // 10 = PX4_MOTOR_CONTROL_MODE
   arm();
+  
   RCLCPP_WARN(get_logger(), "MPC Controller state: ENABLED");
   running_controller_ = true;
 }
 
-void MpcRunner::disabling_procedure() {
+void MpcRunner::dumpParameters() {
+  // Trajectory
+  get_parameter("trajectory_config_path", node_params_.trajectory_config_path);
+  get_parameter("trajectory_dt", node_params_.trajectory_dt);
+  node_params_.trajectory_solver = eagle_mpc::SolverTypes_map.at(get_parameter("trajectory_solver").as_string());
+  get_parameter("trajectory_integration", node_params_.trajectory_integration);
+  node_params_.trajectory_squash = node_params_.trajectory_solver == eagle_mpc::SolverTypes::SolverSbFDDP;
+
+  // MpcController
+  get_parameter("mpc_config_path", node_params_.mpc_config_path);
+  get_parameter("mpc_type", node_params_.mpc_type);
+}
+
+void MpcRunner::initializeMpcController() {
+  RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Initializing trajectory)");
+
+  trajectory_ = eagle_mpc::Trajectory::create();
+  trajectory_->autoSetup(node_params_.trajectory_config_path);
+
+  boost::shared_ptr<crocoddyl::ShootingProblem> problem = trajectory_->createProblem(
+      node_params_.trajectory_dt, node_params_.trajectory_squash, node_params_.trajectory_integration);
+
+  boost::shared_ptr<crocoddyl::SolverFDDP> solver;
+  switch (node_params_.trajectory_solver) {
+    case eagle_mpc::SolverTypes::SolverSbFDDP:
+      solver = boost::make_shared<eagle_mpc::SolverSbFDDP>(problem, trajectory_->get_squash());
+      break;
+    case eagle_mpc::SolverTypes::SolverBoxFDDP:
+      solver = boost::make_shared<crocoddyl::SolverBoxFDDP>(problem);
+      break;
+  }
+  std::vector<boost::shared_ptr<crocoddyl::CallbackAbstract>> callbacks;
+  callbacks.push_back(boost::make_shared<crocoddyl::CallbackVerbose>());
+  solver->setCallbacks(callbacks);
+
+  // TODO: Check that the current state is close to the initial state of the trajectory
+  // Then solve
+  solver->solve(crocoddyl::DEFAULT_VECTOR, crocoddyl::DEFAULT_VECTOR);
+
+  RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Initializing MpcController)");
+  switch (eagle_mpc::MpcTypes_map.at(node_params_.mpc_type)) {
+    case eagle_mpc::MpcTypes::Carrot:
+      mpc_controller_ = boost::make_shared<eagle_mpc::CarrotMpc>(
+          trajectory_, solver->get_xs(), node_params_.trajectory_dt, node_params_.mpc_config_path);
+      break;
+    case eagle_mpc::MpcTypes::Rail:
+      mpc_controller_ = boost::make_shared<eagle_mpc::RailMpc>(solver->get_xs(), node_params_.trajectory_dt,
+                                                               node_params_.mpc_config_path);
+      break;
+    case eagle_mpc::MpcTypes::Weighted:
+      mpc_controller_ = boost::make_shared<eagle_mpc::WeightedMpc>(trajectory_, node_params_.trajectory_dt,
+                                                                   node_params_.mpc_config_path);
+  }
+
+  if (mpc_controller_->get_solver_type() == eagle_mpc::SolverTypes::SolverSbFDDP) {
+    boost::static_pointer_cast<eagle_mpc::SolverSbFDDP>(mpc_controller_->get_solver())->set_convergence_init(1e-3);
+  }
+}
+
+void MpcRunner::arm() const {
+  publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+
+  RCLCPP_INFO(get_logger(), "Arm command send");
+}
+
+void MpcRunner::disablingProcedure() {
   RCLCPP_WARN(get_logger(), "MPC Controller. DISABLING");
   // Change to a safe flight mode
 
@@ -75,19 +159,13 @@ void MpcRunner::disabling_procedure() {
   RCLCPP_WARN(get_logger(), "MPC Controller state: DISABLED");
 }
 
-void MpcRunner::arm() const {
-  publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
-
-  RCLCPP_INFO(get_logger(), "Arm command send");
-}
-
 void MpcRunner::disarm() const {
-  publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
+  publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
 
   RCLCPP_INFO(get_logger(), "Disarm command send");
 }
 
-void MpcRunner::publish_vehicle_command(uint16_t command, float param1, float param2) const {
+void MpcRunner::publishVehicleCommand(uint16_t command, float param1, float param2) const {
   px4_msgs::msg::VehicleCommand msg{};
   msg.timestamp = timestamp_.load();
   msg.param1 = param1;
@@ -101,7 +179,6 @@ void MpcRunner::publish_vehicle_command(uint16_t command, float param1, float pa
 
   vehicle_command_publisher_->publish(msg);
 }
-
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
