@@ -15,33 +15,33 @@ DecentralizedController::DecentralizedController(const std::string& node_name) :
   timer_offboard_ = create_wall_timer(100ms, std::bind(&DecentralizedController::timerOffboardCallback, this),
                                       callback_group_sender_);
   timer_wps_ = create_wall_timer(50ms, std::bind(&DecentralizedController::timerWaypointCallback, this),
-                                      callback_group_sender_);
+                                 callback_group_sender_);
 
   // Load wps (stored in NWU)
   px4_msgs::msg::TrajectorySetpoint wp;
   wp.x = 0;
   wp.y = 0;
-  wp.z = 2;
+  wp.z = 2.5;
   wp.yaw = 0;
   waypoints_.push_back(wp);
 
-  wp.x = 1;
-  wp.y = 0;
-  wp.z = 2;
-  wp.yaw = 0;
-  waypoints_.push_back(wp);
+  // wp.x = 1;
+  // wp.y = 0;
+  // wp.z = 2;
+  // wp.yaw = 0;
+  // waypoints_.push_back(wp);
 
-  wp.x = 1;
-  wp.y = 1;
-  wp.z = 2;
-  wp.yaw = 0;
-  waypoints_.push_back(wp);
+  // wp.x = 1;
+  // wp.y = 1;
+  // wp.z = 2;
+  // wp.yaw = 0;
+  // waypoints_.push_back(wp);
 
-  wp.x = 0;
-  wp.y = 1;
-  wp.z = 2;
-  wp.yaw = 0;
-  waypoints_.push_back(wp);
+  // wp.x = 0;
+  // wp.y = 1;
+  // wp.z = 2;
+  // wp.yaw = 0;
+  // waypoints_.push_back(wp);
 
   waypoint_active_ = 0;
 
@@ -140,9 +140,10 @@ void DecentralizedController::publish_vehicle_command(uint16_t command, float pa
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-  std::shared_ptr<DecentralizedController> controller = std::make_shared<DecentralizedController>("DecentralizedController");
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
+  std::shared_ptr<DecentralizedController> controller =
+      std::make_shared<DecentralizedController>("DecentralizedController");
+
+  rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(controller);
 
   executor.spin();

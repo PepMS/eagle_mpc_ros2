@@ -4,7 +4,7 @@ using namespace std::chrono_literals;
 
 StatePubSub::StatePubSub(const std::string& node_name, const bool& pub) : rclcpp::Node(node_name), pub_enabled_(pub) {
   if (pub_enabled_) {
-    platform_state_publisher_ = create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 10);
+    platform_state_publisher_ = create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 1);
   }
   
   callback_group_loader_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -14,17 +14,17 @@ StatePubSub::StatePubSub(const std::string& node_name, const bool& pub) : rclcpp
   sub_opt_loader.callback_group = callback_group_loader_;
   sub_opt_sender.callback_group = callback_group_sender_;
 
-  timesync_sub_ = create_subscription<px4_msgs::msg::Timesync>(
-      "Timesync_PubSubTopic", rclcpp::QoS(10), std::bind(&StatePubSub::timeSyncCallback, this, std::placeholders::_1),
-      sub_opt_loader);
+  // timesync_sub_ = create_subscription<px4_msgs::msg::Timesync>(
+  //     "Timesync_PubSubTopic", rclcpp::QoS(10), std::bind(&StatePubSub::timeSyncCallback, this, std::placeholders::_1),
+  //     sub_opt_loader);
   local_position_subs_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-      "VehicleLocalPosition_PubSubTopic", rclcpp::QoS(10),
+      "VehicleLocalPosition_PubSubTopic", rclcpp::QoS(1),
       std::bind(&StatePubSub::vehicleLocalPositionCallback, this, std::placeholders::_1), sub_opt_loader);
   attitude_subs_ = create_subscription<px4_msgs::msg::VehicleAttitude>(
-      "VehicleAttitude_PubSubTopic", rclcpp::QoS(10),
+      "VehicleAttitude_PubSubTopic", rclcpp::QoS(1),
       std::bind(&StatePubSub::vehicleAttitudeCallback, this, std::placeholders::_1), sub_opt_loader);
   angular_velocity_subs_ = create_subscription<px4_msgs::msg::VehicleAngularVelocity>(
-      "VehicleAngularVelocity_PubSubTopic", rclcpp::QoS(10),
+      "VehicleAngularVelocity_PubSubTopic", rclcpp::QoS(1),
       std::bind(&StatePubSub::vehicleAngularVelocityCallback, this, std::placeholders::_1), sub_opt_loader);
 
   // State variable init
@@ -41,7 +41,8 @@ void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocal
   vel_ned_(0) = msg->vx;
   vel_ned_(1) = msg->vy;
   vel_ned_(2) = msg->vz;
-  vel_frd_ = px4_ros_com::frame_transforms::transform_frame(vel_ned_, q_ned_frd_.conjugate());
+  vel_frd_ = q_ned_frd_.toRotationMatrix().transpose() * vel_ned_;
+  // vel_frd_ = px4_ros_com::frame_transforms::transform_frame(vel_ned_, q_ned_frd_.conjugate());
 
   // Position in the inertial frame
   mut_state_.lock();
@@ -56,6 +57,8 @@ void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocal
 
 void StatePubSub::vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::SharedPtr msg) {
   q_ned_frd_ = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(msg->q);
+  q_ned_frd_.normalize();
+
   q_nwu_flu_ = NWU_NED_Q * q_ned_frd_ * FRD_FLU_Q;
 
   mut_state_.lock();
@@ -64,6 +67,10 @@ void StatePubSub::vehicleAttitudeCallback(const px4_msgs::msg::VehicleAttitude::
   state_(5) = q_nwu_flu_.z();
   state_(6) = q_nwu_flu_.w();
   mut_state_.unlock();
+
+  if (pub_enabled_) {
+    publish_platform_state();
+  }
 }
 
 void StatePubSub::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg) {
@@ -73,9 +80,7 @@ void StatePubSub::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAng
   state_(12) = -msg->xyz[2];
   mut_state_.unlock();
 
-  if (pub_enabled_) {
-    publish_platform_state();
-  }
+  timestamp_.store(msg->timestamp);
 }
 
 void StatePubSub::publish_platform_state() {

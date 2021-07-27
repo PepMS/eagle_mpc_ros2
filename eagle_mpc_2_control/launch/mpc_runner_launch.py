@@ -11,11 +11,11 @@ def generate_launch_description():
       output="screen",
       emulate_tty=True,
       parameters=[
-        {"trajectory_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/trajectories/iris_hover.yaml"},
-        {"trajectory_dt": 10},
+        {"trajectory_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/trajectories/iris_px4_hover.yaml"},
+        {"trajectory_dt": 20},
         {"trajectory_solver": "SolverSbFDDP"},
         {"trajectory_integration": "IntegratedActionModelEuler"},
-        {"mpc_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/mpc/iris_mpc.yaml"},
+        {"mpc_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/mpc/iris_px4_mpc.yaml"},
         {"mpc_type": "Carrot"}
         ]
     )

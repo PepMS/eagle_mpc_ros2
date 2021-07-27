@@ -33,6 +33,7 @@ set(EAGLE_MPC_2_TOOLS_SRC src/state_pub_sub.cpp src/controller_base.cpp)
 set(DECENTRALIZED_CONTROL_SRC src/decentralized_controller.cpp)
 set(MPC_CONTROL_SRC src/mpc_runner.cpp)
 set(MOTOR_TEST_SRC src/motor_test.cpp)
+set(MPC_TEST src/mpc_runner_single.cpp)
 
 #################
 # Setup targets #
@@ -64,6 +65,9 @@ add_executable(motor_test ${MOTOR_TEST_SRC})
 ament_target_dependencies(motor_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
 target_link_libraries(motor_test eagle_mpc_2_tools)
 
+add_executable(mpc_test ${MPC_TEST}) 
+ament_target_dependencies(mpc_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+target_link_libraries(mpc_test eagle_mpc_2_tools)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -80,6 +84,7 @@ install(TARGETS
   decentralized_control
   motor_test
   mpc_runner
+  mpc_test
   DESTINATION lib/${PROJECT_NAME}
 )
 

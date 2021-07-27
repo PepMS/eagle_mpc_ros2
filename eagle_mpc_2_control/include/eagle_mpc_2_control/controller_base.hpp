@@ -51,9 +51,9 @@ class ControllerAbstract : public StatePubSub {
   void vehicleCtrlModeCallback(const px4_msgs::msg::VehicleControlMode::UniquePtr msg);
 
   // Publishers timer callback
-  virtual void timerComputeControlsCallback();
-
-  void publishControls();
+  void timerComputeControlsCallback();
+  virtual void computeControls() = 0;
+  virtual void publishControls();
 
   // Timer publishers
   rclcpp::TimerBase::SharedPtr compute_controls_timer_;
@@ -62,7 +62,7 @@ class ControllerAbstract : public StatePubSub {
   px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
 
   // Motor speed commands in range [-1, 1]
-  Eigen::Vector4d actuator_normalized_;
+  Eigen::VectorXd actuator_normalized_;
   bool motor_control_mode_enabled_;
 };
 

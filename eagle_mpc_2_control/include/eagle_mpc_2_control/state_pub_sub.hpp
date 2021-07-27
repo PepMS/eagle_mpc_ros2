@@ -20,7 +20,7 @@
 
 // Transformation tools
 const Eigen::Quaterniond FRD_FLU_Q =
-    px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
+    px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(-M_PI, 0.0, 0.0);
 const Eigen::Quaterniond NWU_NED_Q =
     px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(M_PI, 0.0, 0.0);
 
@@ -45,7 +45,7 @@ class StatePubSub : public rclcpp::Node {
   rclcpp::CallbackGroup::SharedPtr callback_group_loader_;
   rclcpp::CallbackGroup::SharedPtr callback_group_sender_;
 
- private:
+ protected:
   // subs
   rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subs_;
   rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr attitude_subs_;

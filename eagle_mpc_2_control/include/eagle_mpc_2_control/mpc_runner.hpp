@@ -34,6 +34,7 @@
 #include "eagle_mpc/mpc-controllers/rail-mpc.hpp"
 #include "eagle_mpc/mpc-controllers/weighted-mpc.hpp"
 #include "eagle_mpc/mpc-base.hpp"
+#include "eagle_mpc/utils/tools.hpp"
 
 #include "eagle_mpc_2_control/controller_base.hpp"
 
@@ -68,6 +69,14 @@ class MpcRunner : public ControllerAbstract {
   boost::shared_ptr<eagle_mpc::Trajectory> trajectory_;
   boost::shared_ptr<eagle_mpc::MpcAbstract> mpc_controller_;
 
+  uint64_t controller_start_time_;
+  uint64_t controller_time_;
+  uint64_t controller_instant_;
+
+  Eigen::VectorXd control_command_;
+  Eigen::VectorXd thrust_command_;
+
+  double motor_value_;
   void declareParameters();
   void dumpParameters();
 
@@ -75,14 +84,19 @@ class MpcRunner : public ControllerAbstract {
   void disablingProcedure();
 
   void initializeMpcController();
+  virtual void computeControls();
+  virtual void publishControls();
   
   void arm() const;
   void disarm() const;
   void publishVehicleCommand(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
   
+  void computeControls2();
 
 
   void enableControllerCallback(const rclcpp::Parameter& p);
+  virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
+
 };
 
 #endif

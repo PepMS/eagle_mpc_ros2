@@ -36,12 +36,20 @@ public:
   // virtual void timerComputeControlsCallback() override;
 
 private:
+  virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
+
+
+  virtual void computeControls();
+  virtual void publishControls();
+
   void changeMotorCallback();
 
   rclcpp::TimerBase::SharedPtr change_motor_timer_;
 
   std::size_t counter_;
   std::size_t motor_idx_;
+
+  double motor_value_;
 };
 
 #endif
