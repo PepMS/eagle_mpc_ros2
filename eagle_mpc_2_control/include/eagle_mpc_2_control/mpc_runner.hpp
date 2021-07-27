@@ -85,18 +85,13 @@ class MpcRunner : public ControllerAbstract {
 
   void initializeMpcController();
   virtual void computeControls();
-  virtual void publishControls();
+  // virtual void publishControls();
   
   void arm() const;
   void disarm() const;
   void publishVehicleCommand(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
   
-  void computeControls2();
-
-
   void enableControllerCallback(const rclcpp::Parameter& p);
-  virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
-
 };
 
 #endif

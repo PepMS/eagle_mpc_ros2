@@ -40,8 +40,8 @@ ControllerAbstract::ControllerAbstract(const std::string& node_name) : StatePubS
       "VehicleControlMode_PubSubTopic", rclcpp::QoS(1),
       std::bind(&ControllerAbstract::vehicleCtrlModeCallback, this, std::placeholders::_1), sub_opt_loader);
 
-  // compute_controls_timer_ = create_wall_timer(
-  //     4ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this), callback_group_sender_);
+  compute_controls_timer_ = create_wall_timer(
+      4ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this), callback_group_sender_);
 
   // Variable initialization
   actuator_normalized_ = Eigen::VectorXd::Zero(4);
@@ -63,7 +63,8 @@ void ControllerAbstract::timerComputeControlsCallback() {
 
 void ControllerAbstract::publishControls() {
   actuator_direct_control_msg_.timestamp = timestamp_.load();
-
+  actuator_direct_control_msg_.noutputs = 4;
+  
   actuator_direct_control_msg_.output[0] = actuator_normalized_(0);
   actuator_direct_control_msg_.output[1] = actuator_normalized_(1);
   actuator_direct_control_msg_.output[2] = actuator_normalized_(2);

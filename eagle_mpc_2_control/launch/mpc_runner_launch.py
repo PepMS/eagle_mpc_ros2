@@ -11,7 +11,7 @@ def generate_launch_description():
       output="screen",
       emulate_tty=True,
       parameters=[
-        {"trajectory_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/trajectories/iris_px4_hover.yaml"},
+        {"trajectory_config_path": "/home/pepms/wsros/mpc-ws/src/eagle_mpc_ros/eagle_mpc_yaml/trajectories/iris_px4_displacement.yaml"},
         {"trajectory_dt": 20},
         {"trajectory_solver": "SolverSbFDDP"},
         {"trajectory_integration": "IntegratedActionModelEuler"},

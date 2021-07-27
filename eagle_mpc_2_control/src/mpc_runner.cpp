@@ -35,17 +35,6 @@ MpcRunner::MpcRunner(const std::string& node_name) : ControllerAbstract(node_nam
 
   running_controller_ = false;
   RCLCPP_WARN(get_logger(), "ORIGINAL MPC RUNNER");
-
-  rclcpp::SubscriptionOptions sub_opt_loader = rclcpp::SubscriptionOptions();
-  rclcpp::SubscriptionOptions sub_opt_sender = rclcpp::SubscriptionOptions();
-  sub_opt_loader.callback_group = callback_group_loader_;
-  sub_opt_sender.callback_group = callback_group_sender_;
-
-  angular_velocity_subs_ = nullptr;
-  angular_velocity_subs_ = create_subscription<px4_msgs::msg::VehicleAngularVelocity>(
-      "VehicleAngularVelocity_PubSubTopic", rclcpp::QoS(1),
-      std::bind(&MpcRunner::vehicleAngularVelocityCallback, this, std::placeholders::_1), sub_opt_loader);
-  motor_value_ = -1.0;
 }
 
 MpcRunner::~MpcRunner() {}
@@ -160,7 +149,7 @@ void MpcRunner::initializeMpcController() {
   thrust_command_ = Eigen::VectorXd::Zero(mpc_controller_->get_platform_params()->n_rotors_);
 }
 
-void MpcRunner::computeControls2() {
+void MpcRunner::computeControls() {
   if (running_controller_) {
     mut_state_.lock();
     mpc_controller_->get_problem()->set_x0(state_);
@@ -180,20 +169,8 @@ void MpcRunner::computeControls2() {
     thrust_command_ = control_command_.head(thrust_command_.size());
     eagle_mpc::Tools::thrustToSpeedNormalized(thrust_command_, mpc_controller_->get_platform_params(),
                                               actuator_normalized_);
-    
-    std::cout << "State: \n" << mpc_controller_->get_solver()->get_xs().back() << std::endl;
-    // if (motor_control_mode_enabled_) {
-    //   std::cout << "This is the state: " << mpc_controller_->get_problem()->get_x0() << std::endl;
-    //   std::cout << "This is the thrust command: " << thrust_command_ << std::endl;
-    //   std::cout << "This is the normalized: " << actuator_normalized_ << std::endl;
-    // }
   }
 }
-
-void MpcRunner::computeControls() {}
-
-
-void MpcRunner::publishControls() {}
 
 void MpcRunner::arm() const {
   publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
@@ -216,41 +193,6 @@ void MpcRunner::disarm() const {
   RCLCPP_INFO(get_logger(), "Disarm command send");
 }
 
-void MpcRunner::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg) {
-  mut_state_.lock();
-  state_(10) = msg->xyz[0];
-  state_(11) = -msg->xyz[1];
-  state_(12) = -msg->xyz[2];
-  mut_state_.unlock();
-
-  timestamp_.store(msg->timestamp);
-
-  computeControls2();
-
-  // if (motor_control_mode_enabled_ && motor_value_ < -0.975) {
-  // if (motor_control_mode_enabled_) {
-    // actuator_normalized_[0] = motor_value_;
-    // actuator_normalized_[1] = motor_value_;
-    // actuator_normalized_[2] = motor_value_;
-    // actuator_normalized_[3] = motor_value_;
-
-    // actuator_direct_control_msg_.timestamp = timestamp_.load();
-    actuator_direct_control_msg_.timestamp = msg->timestamp;
-    actuator_direct_control_msg_.noutputs = 4;
-    actuator_direct_control_msg_.output[0] = actuator_normalized_[0];
-    actuator_direct_control_msg_.output[1] = actuator_normalized_[1];
-    actuator_direct_control_msg_.output[2] = actuator_normalized_[2];
-    actuator_direct_control_msg_.output[3] = actuator_normalized_[3];
-
-    actuator_direct_control_pub_->publish(actuator_direct_control_msg_);
-
-    // RCLCPP_INFO(get_logger(), "Sent motor value: %f", motor_value_);
-    // motor_value_ += 0.001;
-    // if (motor_value_ >= 1) {
-    //   motor_value_ = -1;
-    // }
-  // }
-}
 
 void MpcRunner::publishVehicleCommand(uint16_t command, float param1, float param2) const {
   px4_msgs::msg::VehicleCommand msg{};
