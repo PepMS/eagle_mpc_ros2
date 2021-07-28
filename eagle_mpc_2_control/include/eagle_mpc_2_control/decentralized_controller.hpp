@@ -33,7 +33,7 @@ class DecentralizedController : public StatePubSub {
   std::size_t offboard_setpoint_counter_;
 
   std::vector<px4_msgs::msg::TrajectorySetpoint> waypoints_;
-  std::size_t waypoint_active_;
+  uint64_t waypoint_active_;
 
   // pubs
   rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;

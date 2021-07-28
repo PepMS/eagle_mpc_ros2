@@ -13,9 +13,9 @@ DecentralizedController::DecentralizedController(const std::string& node_name) :
   offboard_setpoint_counter_ = 0;
 
   timer_offboard_ = create_wall_timer(100ms, std::bind(&DecentralizedController::timerOffboardCallback, this),
-                                      callback_group_sender_);
+                                      callback_group_other_);
   timer_wps_ = create_wall_timer(50ms, std::bind(&DecentralizedController::timerWaypointCallback, this),
-                                 callback_group_sender_);
+                                 callback_group_other_);
 
   // Load wps (stored in NWU)
   px4_msgs::msg::TrajectorySetpoint wp;
@@ -94,7 +94,7 @@ void DecentralizedController::timerWaypointCallback() {
 
   if (pos_err.norm() < 0.05 && waypoint_active_ < waypoints_.size() - 1) {
     waypoint_active_++;
-    RCLCPP_INFO(get_logger(), "Waypoint %d activated", waypoint_active_);
+    RCLCPP_INFO(get_logger(), "Waypoint %ld activated", waypoint_active_);
   }
 }
 

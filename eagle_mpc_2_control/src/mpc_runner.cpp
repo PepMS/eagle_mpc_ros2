@@ -31,15 +31,16 @@ using namespace std::chrono_literals;
 namespace eagle_mpc_ros2 {
 
 MpcRunner::MpcRunner(const std::string& node_name) : ControllerAbstract(node_name) {
-    vehicle_command_publisher_ = create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 1);
+    vehicle_command_publisher_ = create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 10);
 
     std::string service_name = std::string(this->get_name()) + "/state_transition";
     service_sm_transition_ = create_service<eagle_mpc_2_msgs::srv::MpcControllerTransition>(
         service_name.c_str(),
-        std::bind(&MpcRunner::transitionRequest, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&MpcRunner::transitionRequest, this, std::placeholders::_1, std::placeholders::_2),
+        rmw_qos_profile_services_default, callback_group_other_);
 
     start_countdown_timer_ =
-        create_wall_timer(1s, std::bind(&MpcRunner::timerStartCountdownCallback, this), callback_group_sender_);
+        create_wall_timer(1s, std::bind(&MpcRunner::timerStartCountdownCallback, this), callback_group_other_);
     start_countdown_timer_->cancel();
 
     declareParameters();
@@ -67,9 +68,10 @@ void MpcRunner::transitionRequest(
                 response->accepted = true;
                 response->result = smEnable(message);
                 response->message = message;
-                RCLCPP_WARN(get_logger(), response->message.c_str());
                 if (response->result) {
                     sm_active_phase_ = ENABLED;
+                } else {
+                    RCLCPP_WARN(get_logger(), response->message.c_str());
                 }
             } else {
                 response->accepted = false;
@@ -83,10 +85,11 @@ void MpcRunner::transitionRequest(
                 response->accepted = true;
                 response->result = smStart(message);
                 response->message = message;
-                RCLCPP_WARN(get_logger(), response->message.c_str());
                 if (response->result) {
                     start_countdown_counter_ = 0;
                     start_countdown_timer_->reset();
+                } else {
+                    RCLCPP_WARN(get_logger(), response->message.c_str());
                 }
             } else {
                 response->accepted = false;
@@ -98,7 +101,12 @@ void MpcRunner::transitionRequest(
         case DISABLE:
             if (sm_active_phase_ == RUNNING) {
                 response->accepted = true;
-                response->result = smDisable();
+                response->result = smDisable(message);
+                response->message = message;
+                RCLCPP_WARN(get_logger(), response->message.c_str());
+                if (response->result) {
+                    sm_active_phase_ = IDLE;
+                }
             } else {
                 response->accepted = false;
                 response->message = "Cannot DISABLE controller. It is not in the RUNNING state.";
@@ -124,7 +132,6 @@ bool MpcRunner::smEnable(std::string& message) {
     if (local_position_subs_->get_publisher_count() == 0 || attitude_subs_->get_publisher_count() == 0 ||
         angular_velocity_subs_->get_publisher_count() == 0) {
         message = "Cannot enable MPC Controller. Check MicroRTPS Agent is running.";
-        // RCLCPP_WARN(get_logger(), message.c_str());
         return false;
     }
 
@@ -132,7 +139,6 @@ bool MpcRunner::smEnable(std::string& message) {
     for (int i = 0; i < state_.size(); ++i) {
         if (state_(i) == 0) {
             message = "Cannot enable MPC Controller. Check PX4 is publishing the platform state.";
-            // RCLCPP_WARN(get_logger(), message.c_str());
             return false;
         }
     }
@@ -143,8 +149,7 @@ bool MpcRunner::smEnable(std::string& message) {
         return false;
     }
 
-    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1,
-                          10);  // 10 = PX4_MOTOR_CONTROL_MODE
+    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 10.0);
     arm();
 
     return true;
@@ -175,13 +180,18 @@ void MpcRunner::handleVehicleCtrlMode(const px4_msgs::msg::VehicleControlMode::S
     platform_armed_ = msg->flag_armed;
 }
 
-bool MpcRunner::smDisable() { return true; }
+bool MpcRunner::smDisable(std::string& message) {
+    // Pos Ctl
+    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 3);
+
+    return true;
+}
 
 void MpcRunner::timerStartCountdownCallback() {
     if (start_countdown_counter_ == 0) {
         RCLCPP_WARN(get_logger(), "MPC Controller will start in...");
     }
-    RCLCPP_WARN(get_logger(), "%d...", get_parameter("start_countdown_limit").as_int() - start_countdown_counter_);
+    RCLCPP_WARN(get_logger(), "%ld...", get_parameter("start_countdown_limit").as_int() - start_countdown_counter_);
 
     if (start_countdown_counter_ >= get_parameter("start_countdown_limit").as_int()) {
         start_countdown_timer_->cancel();
@@ -197,7 +207,7 @@ void MpcRunner::timerStartCountdownCallback() {
 void MpcRunner::declareParameters() {
     // Node parameter
     declare_parameter<bool>("enable_controller", false);
-    declare_parameter<double>("trajectory_initial_state_thres", 0.5);
+    declare_parameter<double>("trajectory_initial_state_thres", 5.0);
     declare_parameter<int>("start_countdown_limit", 3);
 
     // Trajectory
@@ -225,7 +235,6 @@ void MpcRunner::dumpParameters() {
 }
 
 bool MpcRunner::initializeMpcController(std::string& message) {
-    RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Initializing trajectory)");
     trajectory_ = eagle_mpc::Trajectory::create();
     trajectory_->autoSetup(node_params_.trajectory_config_path);
 
@@ -254,7 +263,6 @@ bool MpcRunner::initializeMpcController(std::string& message) {
 
     solver->solve(crocoddyl::DEFAULT_VECTOR, crocoddyl::DEFAULT_VECTOR);
 
-    RCLCPP_INFO(get_logger(), "MPC Controller state: ENABLING (Initializing MpcController)");
     switch (eagle_mpc::MpcTypes_map.at(node_params_.mpc_type)) {
         case eagle_mpc::MpcTypes::Carrot:
             mpc_controller_ = boost::make_shared<eagle_mpc::CarrotMpc>(
@@ -299,6 +307,8 @@ void MpcRunner::computeControls() {
         thrust_command_ = control_command_.head(thrust_command_.size());
         eagle_mpc::Tools::thrustToSpeedNormalized(thrust_command_, mpc_controller_->get_platform_params(),
                                                   actuator_normalized_);
+    } else {
+        actuator_normalized_ = -Eigen::VectorXd::Ones(actuator_normalized_.size());
     }
 }
 

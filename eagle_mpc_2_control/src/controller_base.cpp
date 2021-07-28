@@ -31,17 +31,15 @@ ControllerAbstract::ControllerAbstract(const std::string& node_name) : StatePubS
     actuator_direct_control_pub_ =
         create_publisher<px4_msgs::msg::ActuatorDirectControl>("ActuatorDirectControl_PubSubTopic", 1);
 
-    rclcpp::SubscriptionOptions sub_opt_loader = rclcpp::SubscriptionOptions();
-    rclcpp::SubscriptionOptions sub_opt_sender = rclcpp::SubscriptionOptions();
-    sub_opt_loader.callback_group = callback_group_loader_;
-    sub_opt_sender.callback_group = callback_group_sender_;
+    rclcpp::SubscriptionOptions sub_opt_other = rclcpp::SubscriptionOptions();
+    sub_opt_other.callback_group = callback_group_other_;
 
     ctrl_mode_subs_ = create_subscription<px4_msgs::msg::VehicleControlMode>(
         "VehicleControlMode_PubSubTopic", rclcpp::QoS(1),
-        std::bind(&ControllerAbstract::vehicleCtrlModeCallback, this, std::placeholders::_1), sub_opt_loader);
+        std::bind(&ControllerAbstract::vehicleCtrlModeCallback, this, std::placeholders::_1), sub_opt_other);
 
     compute_controls_timer_ = create_wall_timer(
-        4ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this), callback_group_sender_);
+        4ms, std::bind(&ControllerAbstract::timerComputeControlsCallback, this), callback_group_commands_);
 
     // Variable initialization
     actuator_normalized_ = -Eigen::VectorXd::Ones(4);

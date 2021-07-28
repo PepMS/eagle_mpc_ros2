@@ -110,7 +110,7 @@ class MpcRunner : public ControllerAbstract {
     // State machine methods
     bool smEnable(std::string& message);
     bool smStart(std::string& message);
-    bool smDisable();
+    bool smDisable(std::string& message);
 
     static std::map<std::string, int> createSmTransitionsMap() {
         std::map<std::string, int> m;
