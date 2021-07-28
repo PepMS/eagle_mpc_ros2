@@ -21,34 +21,37 @@
 
 #include "eagle_mpc_2_control/state_pub_sub.hpp"
 
+namespace eagle_mpc_ros2 {
+
 class DecentralizedController : public StatePubSub {
- public:
-  explicit DecentralizedController(const std::string& node_name);
-  virtual ~DecentralizedController();
+    public:
+    explicit DecentralizedController(const std::string& node_name);
+    virtual ~DecentralizedController();
 
- private:
-  rclcpp::TimerBase::SharedPtr timer_offboard_;
-  rclcpp::TimerBase::SharedPtr timer_wps_;
+    private:
+    rclcpp::TimerBase::SharedPtr timer_offboard_;
+    rclcpp::TimerBase::SharedPtr timer_wps_;
 
-  std::size_t offboard_setpoint_counter_;
+    std::size_t offboard_setpoint_counter_;
 
-  std::vector<px4_msgs::msg::TrajectorySetpoint> waypoints_;
-  uint64_t waypoint_active_;
+    std::vector<px4_msgs::msg::TrajectorySetpoint> waypoints_;
+    uint64_t waypoint_active_;
 
-  // pubs
-  rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
-  rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
-  rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_publisher_;
+    // pubs
+    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
+    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_publisher_;
 
-  // callbacks
-  void timerOffboardCallback();
-  void timerWaypointCallback();
+    // callbacks
+    void timerOffboardCallback();
+    void timerWaypointCallback();
 
-  // methods
-  void arm() const;
-  void disarm() const;
-  void publish_offboard_control_mode() const;
-  void publish_trajectory_setpoint() const;
-  void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
+    // methods
+    void arm() const;
+    void disarm() const;
+    void publish_offboard_control_mode() const;
+    void publish_trajectory_setpoint() const;
+    void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
 };
+}  // namespace eagle_mpc_ros2
 #endif

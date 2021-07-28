@@ -35,6 +35,8 @@
 
 #include "eagle_mpc_2_control/state_pub_sub.hpp"
 
+namespace eagle_mpc_ros2 {
+
 class ControllerAbstract : public StatePubSub {
     public:
     explicit ControllerAbstract(const std::string& node_name);
@@ -68,4 +70,5 @@ class ControllerAbstract : public StatePubSub {
     bool platform_armed_;
 };
 
+}  // namespace eagle_mpc_ros2
 #endif

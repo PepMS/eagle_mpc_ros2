@@ -2,6 +2,8 @@
 
 using namespace std::chrono_literals;
 
+namespace eagle_mpc_ros2 {
+
 StatePubSub::StatePubSub(const std::string& node_name, const bool& pub) : rclcpp::Node(node_name), pub_enabled_(pub) {
     if (pub_enabled_) {
         platform_state_publisher_ = create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 1);
@@ -101,4 +103,6 @@ void StatePubSub::publish_platform_state() {
     mut_state_.unlock();
 
     platform_state_publisher_->publish(platform_state_msg_);
+}
+
 }

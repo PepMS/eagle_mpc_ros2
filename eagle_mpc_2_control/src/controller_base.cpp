@@ -26,6 +26,8 @@
 
 using namespace std::chrono_literals;
 
+namespace eagle_mpc_ros2 {
+
 ControllerAbstract::ControllerAbstract(const std::string& node_name) : StatePubSub(node_name) {
     // Publisher
     actuator_direct_control_pub_ =
@@ -74,4 +76,5 @@ void ControllerAbstract::publishControls() {
     actuator_direct_control_msg_.output[3] = actuator_normalized_(3);
 
     actuator_direct_control_pub_->publish(actuator_direct_control_msg_);
+}
 }

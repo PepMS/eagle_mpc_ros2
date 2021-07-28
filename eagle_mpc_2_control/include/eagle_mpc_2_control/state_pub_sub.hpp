@@ -18,6 +18,8 @@
 
 #include "eagle_mpc_2_msgs/msg/platform_state.hpp"
 
+namespace eagle_mpc_ros2 {
+
 // Transformation tools
 const Eigen::Quaterniond FRD_FLU_Q =
     px4_ros_com::frame_transforms::utils::quaternion::quaternion_from_euler(-M_PI, 0.0, 0.0);
@@ -70,4 +72,5 @@ class StatePubSub : public rclcpp::Node {
 
     bool pub_enabled_;
 };
+}  // namespace eagle_mpc_ros2
 #endif

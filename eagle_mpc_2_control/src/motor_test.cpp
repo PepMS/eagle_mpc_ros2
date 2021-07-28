@@ -26,6 +26,8 @@
 
 using namespace std::chrono_literals;
 
+namespace eagle_mpc_ros2 {
+
 MotorTest::MotorTest(const std::string& node_name) : ControllerAbstract(node_name) {
     actuator_normalized_[0] = -1.0;
     actuator_normalized_[1] = -1.0;
@@ -93,9 +95,11 @@ void MotorTest::changeMotorCallback() {
     motor_idx_ = motor_idx_ > 3 ? 0 : motor_idx_;
 }
 
+}  // namespace eagle_mpc_ros2
+
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
-    std::shared_ptr<MotorTest> controller = std::make_shared<MotorTest>("MotorTest");
+    std::shared_ptr<eagle_mpc_ros2::MotorTest> controller = std::make_shared<eagle_mpc_ros2::MotorTest>("MotorTest");
 
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node(controller);
