@@ -14,9 +14,6 @@ StatePubSub::StatePubSub(const std::string& node_name, const bool& pub) : rclcpp
   sub_opt_loader.callback_group = callback_group_loader_;
   sub_opt_sender.callback_group = callback_group_sender_;
 
-  // timesync_sub_ = create_subscription<px4_msgs::msg::Timesync>(
-  //     "Timesync_PubSubTopic", rclcpp::QoS(10), std::bind(&StatePubSub::timeSyncCallback, this, std::placeholders::_1),
-  //     sub_opt_loader);
   local_position_subs_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
       "VehicleLocalPosition_PubSubTopic", rclcpp::QoS(1),
       std::bind(&StatePubSub::vehicleLocalPositionCallback, this, std::placeholders::_1), sub_opt_loader);
@@ -37,7 +34,7 @@ void StatePubSub::timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg)
 
 void StatePubSub::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg) {
   // We use the local inertial frame: NWU
-  // Velocity in the body frame (FLU)
+  // Velocity in the inertial frame: NED
   vel_ned_(0) = msg->vx;
   vel_ned_(1) = msg->vy;
   vel_ned_(2) = msg->vz;

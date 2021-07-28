@@ -68,7 +68,7 @@ void MotorTest::vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngul
 
   timestamp_.store(msg->timestamp);
 
-  if (motor_control_mode_enabled_ && motor_value_ < -0.975) {
+  if (platform_motor_control_enabled_ && motor_value_ < -0.975) {
     // actuator_normalized_[0] = motor_value_;
     // actuator_normalized_[1] = motor_value_;
     // actuator_normalized_[2] = motor_value_;
