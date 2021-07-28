@@ -24,7 +24,7 @@ find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(px4_ros_com REQUIRED)
-find_package(eagle_mpc_2_msgs REQUIRED)
+find_package(eagle_mpc_2_interfaces REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(crocoddyl REQUIRED)
 find_package(eagle_mpc)
@@ -46,14 +46,14 @@ include_directories(include
 )
 
 add_library(eagle_mpc_2_tools ${EAGLE_MPC_2_TOOLS_SRC})
-ament_target_dependencies(eagle_mpc_2_tools rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+ament_target_dependencies(eagle_mpc_2_tools rclcpp px4_msgs px4_ros_com eagle_mpc_2_interfaces)
 
 add_executable(decentralized_control ${DECENTRALIZED_CONTROL_SRC}) 
-ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+ament_target_dependencies(decentralized_control rclcpp px4_msgs px4_ros_com eagle_mpc_2_interfaces)
 target_link_libraries(decentralized_control eagle_mpc_2_tools)
 
 add_executable(mpc_runner ${MPC_CONTROL_SRC})
-ament_target_dependencies(mpc_runner rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+ament_target_dependencies(mpc_runner rclcpp px4_msgs px4_ros_com eagle_mpc_2_interfaces)
 target_link_libraries(mpc_runner 
   eagle_mpc_2_tools 
   ${PINOCCHIO_LIBRARIES}
@@ -62,11 +62,11 @@ target_link_libraries(mpc_runner
 )
 
 add_executable(motor_test ${MOTOR_TEST_SRC}) 
-ament_target_dependencies(motor_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+ament_target_dependencies(motor_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_interfaces)
 target_link_libraries(motor_test eagle_mpc_2_tools)
 
 add_executable(mpc_test ${MPC_TEST}) 
-ament_target_dependencies(mpc_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_msgs)
+ament_target_dependencies(mpc_test rclcpp px4_msgs px4_ros_com eagle_mpc_2_interfaces)
 target_link_libraries(mpc_test eagle_mpc_2_tools)
 
 if(BUILD_TESTING)

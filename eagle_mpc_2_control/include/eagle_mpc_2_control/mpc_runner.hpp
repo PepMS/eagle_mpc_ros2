@@ -40,7 +40,7 @@
 #include "eagle_mpc/utils/tools.hpp"
 
 #include "eagle_mpc_2_control/controller_base.hpp"
-#include "eagle_mpc_2_msgs/srv/mpc_controller_transition.hpp"
+#include "eagle_mpc_2_interfaces/srv/mpc_controller_transition.hpp"
 
 namespace eagle_mpc_ros2 {
 
@@ -60,7 +60,7 @@ class MpcRunner : public ControllerAbstract {
 
     std::shared_ptr<rclcpp::ParameterEventHandler> param_subscriber_;
     std::shared_ptr<rclcpp::ParameterCallbackHandle> param_callback_handle_;
-    rclcpp::Service<eagle_mpc_2_msgs::srv::MpcControllerTransition>::SharedPtr service_sm_transition_;
+    rclcpp::Service<eagle_mpc_2_interfaces::srv::MpcControllerTransition>::SharedPtr service_sm_transition_;
 
     rclcpp::TimerBase::SharedPtr start_countdown_timer_;
     int start_countdown_counter_;
@@ -94,8 +94,8 @@ class MpcRunner : public ControllerAbstract {
     static const std::map<int, std::string> SmStates;
 
     // ROS2 Callbacks & Methods
-    void transitionRequest(const std::shared_ptr<eagle_mpc_2_msgs::srv::MpcControllerTransition::Request> request,
-                           const std::shared_ptr<eagle_mpc_2_msgs::srv::MpcControllerTransition::Response> response);
+    void transitionRequest(const std::shared_ptr<eagle_mpc_2_interfaces::srv::MpcControllerTransition::Request> request,
+                           const std::shared_ptr<eagle_mpc_2_interfaces::srv::MpcControllerTransition::Response> response);
     virtual void handleVehicleCtrlMode(const px4_msgs::msg::VehicleControlMode::SharedPtr msg) override;
     
     void declareParameters();

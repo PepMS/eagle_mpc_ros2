@@ -21,7 +21,7 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
-#include "eagle_mpc_2_msgs/msg/platform_state.hpp"
+#include "eagle_mpc_2_interfaces/msg/platform_state.hpp"
 
 #include "eagle_mpc/trajectory.hpp"
 #include "eagle_mpc/mpc-controllers/carrot-mpc.hpp"

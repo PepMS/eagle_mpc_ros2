@@ -34,7 +34,7 @@ MpcRunner::MpcRunner(const std::string& node_name) : ControllerAbstract(node_nam
     vehicle_command_publisher_ = create_publisher<px4_msgs::msg::VehicleCommand>("VehicleCommand_PubSubTopic", 10);
 
     std::string service_name = std::string(this->get_name()) + "/state_transition";
-    service_sm_transition_ = create_service<eagle_mpc_2_msgs::srv::MpcControllerTransition>(
+    service_sm_transition_ = create_service<eagle_mpc_2_interfaces::srv::MpcControllerTransition>(
         service_name.c_str(),
         std::bind(&MpcRunner::transitionRequest, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default, callback_group_other_);
@@ -54,8 +54,8 @@ const std::map<std::string, int> MpcRunner::SmTransitions = MpcRunner::createSmT
 const std::map<int, std::string> MpcRunner::SmStates = MpcRunner::createSmStatesMap();
 
 void MpcRunner::transitionRequest(
-    const std::shared_ptr<eagle_mpc_2_msgs::srv::MpcControllerTransition::Request> request,
-    const std::shared_ptr<eagle_mpc_2_msgs::srv::MpcControllerTransition::Response> response) {
+    const std::shared_ptr<eagle_mpc_2_interfaces::srv::MpcControllerTransition::Request> request,
+    const std::shared_ptr<eagle_mpc_2_interfaces::srv::MpcControllerTransition::Response> response) {
     int command = -1;
     if (SmTransitions.find(request->command) != SmTransitions.end()) {
         command = SmTransitions.at(request->command);

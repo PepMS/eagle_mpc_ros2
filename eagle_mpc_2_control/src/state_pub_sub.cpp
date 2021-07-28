@@ -6,7 +6,7 @@ namespace eagle_mpc_ros2 {
 
 StatePubSub::StatePubSub(const std::string& node_name, const bool& pub) : rclcpp::Node(node_name), pub_enabled_(pub) {
     if (pub_enabled_) {
-        platform_state_publisher_ = create_publisher<eagle_mpc_2_msgs::msg::PlatformState>("PlatformState", 1);
+        platform_state_publisher_ = create_publisher<eagle_mpc_2_interfaces::msg::PlatformState>("PlatformState", 1);
     }
 
     callback_group_state_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);

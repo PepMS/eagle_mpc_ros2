@@ -16,7 +16,7 @@
 
 #include <px4_ros_com/frame_transforms.h>
 
-#include "eagle_mpc_2_msgs/msg/platform_state.hpp"
+#include "eagle_mpc_2_interfaces/msg/platform_state.hpp"
 
 namespace eagle_mpc_ros2 {
 
@@ -62,13 +62,13 @@ class StatePubSub : public rclcpp::Node {
     virtual void timeSyncCallback(const px4_msgs::msg::Timesync::UniquePtr msg);
 
     // pubs
-    rclcpp::Publisher<eagle_mpc_2_msgs::msg::PlatformState>::SharedPtr platform_state_publisher_;
+    rclcpp::Publisher<eagle_mpc_2_interfaces::msg::PlatformState>::SharedPtr platform_state_publisher_;
 
     // methods
     void publish_platform_state();
 
     // msgs
-    eagle_mpc_2_msgs::msg::PlatformState platform_state_msg_;
+    eagle_mpc_2_interfaces::msg::PlatformState platform_state_msg_;
 
     bool pub_enabled_;
 };
