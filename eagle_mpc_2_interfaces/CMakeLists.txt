@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(eagle_mpc_2_msgs)
+project(eagle_mpc_2_interfaces)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
