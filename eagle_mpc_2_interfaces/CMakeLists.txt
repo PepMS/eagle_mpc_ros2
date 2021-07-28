@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(eagle_mpc_2_msgs)
+project(eagle_mpc_2_interfaces)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -24,8 +24,10 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PlatformState.msg"
+  "srv/MpcControllerTransition.srv"
   DEPENDENCIES geometry_msgs std_msgs
 )
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

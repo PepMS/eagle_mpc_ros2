@@ -12,7 +12,7 @@
   <depend>rclcpp</depend>
   <depend>px4_msgs</depend>
   <depend>px4_ros_com</depend>
-  <depend>eagle_mpc_2_msgs</depend>
+  <depend>eagle_mpc_2_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

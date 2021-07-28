@@ -1,18 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // MIT License
-// 
+//
 // Copyright (c) 2020 Pep Martí Saumell
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,22 +22,34 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////////
 
-#include <rclcpp/rclcpp.hpp>
+#ifndef EAGLE_MPC_2_CONTROL_MOTOR_TEST_HPP
+#define EAGLE_MPC_2_CONTROL_MOTOR_TEST_HPP
 
-#include "px4_mpc/controller_base.hpp"
+#include "eagle_mpc_2_control/controller_base.hpp"
 
+namespace eagle_mpc_ros2 {
 
-int main(int argc, char *argv[])
-{
-  rclcpp::init(argc, argv);
-  std::cout << "Starting odometry listener..." << std::endl;
-  auto n = rclcpp::Node::make_shared("mpc_runner");
-  // MpcRunner mpc_runner(n);
-  const ControllerType::Type controller_type = ControllerType::ExampleController;
-  std::shared_ptr<ControllerAbstract> controller = ControllerAbstract::createController(controller_type, n);
+class MotorTest : public ControllerAbstract {
+    public:
+    explicit MotorTest(const std::string& node_name);
+    virtual ~MotorTest();
 
-  rclcpp::spin(n);
-  rclcpp::shutdown();
+    // virtual void timerComputeControlsCallback() override;
 
-  return 0;
-}
+    private:
+    virtual void vehicleAngularVelocityCallback(const px4_msgs::msg::VehicleAngularVelocity::SharedPtr msg);
+
+    virtual void computeControls();
+    virtual void publishControls();
+
+    void changeMotorCallback();
+
+    rclcpp::TimerBase::SharedPtr change_motor_timer_;
+
+    std::size_t counter_;
+    std::size_t motor_idx_;
+
+    double motor_value_;
+};
+}  // namespace eagle_mpc_ros2
+#endif
