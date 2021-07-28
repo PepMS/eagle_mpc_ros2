@@ -127,46 +127,6 @@ void MpcRunner::transitionRequest(
     RCLCPP_INFO(get_logger(), message.c_str());
 }
 
-bool MpcRunner::smEnable(std::string& message) {
-    // Check that MicroRTPS Agent is publishing
-    if (local_position_subs_->get_publisher_count() == 0 || attitude_subs_->get_publisher_count() == 0 ||
-        angular_velocity_subs_->get_publisher_count() == 0) {
-        message = "Cannot enable MPC Controller. Check MicroRTPS Agent is running.";
-        return false;
-    }
-
-    // Check PX4 is running
-    for (int i = 0; i < state_.size(); ++i) {
-        if (state_(i) == 0) {
-            message = "Cannot enable MPC Controller. Check PX4 is publishing the platform state.";
-            return false;
-        }
-    }
-
-    dumpParameters();
-
-    if (!initializeMpcController(message)) {
-        return false;
-    }
-
-    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 10.0);
-    arm();
-
-    return true;
-}
-
-bool MpcRunner::smStart(std::string& message) {
-    if (!platform_armed_) {
-        message = "Arm the platform before starting the controller";
-        return false;
-    }
-    if (!platform_motor_control_enabled_) {
-        message = "The platform must be in motor control mode to start the controller";
-        return false;
-    }
-    return true;
-}
-
 void MpcRunner::handleVehicleCtrlMode(const px4_msgs::msg::VehicleControlMode::SharedPtr msg) {
     if (msg->flag_control_motors_enabled && !platform_motor_control_enabled_) {
         RCLCPP_WARN(get_logger(), "Direct control enabled!");
@@ -178,30 +138,6 @@ void MpcRunner::handleVehicleCtrlMode(const px4_msgs::msg::VehicleControlMode::S
     }
     platform_motor_control_enabled_ = msg->flag_control_motors_enabled;
     platform_armed_ = msg->flag_armed;
-}
-
-bool MpcRunner::smDisable(std::string& message) {
-    // Pos Ctl
-    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 3);
-
-    return true;
-}
-
-void MpcRunner::timerStartCountdownCallback() {
-    if (start_countdown_counter_ == 0) {
-        RCLCPP_WARN(get_logger(), "MPC Controller will start in...");
-    }
-    RCLCPP_WARN(get_logger(), "%ld...", get_parameter("start_countdown_limit").as_int() - start_countdown_counter_);
-
-    if (start_countdown_counter_ >= get_parameter("start_countdown_limit").as_int()) {
-        start_countdown_timer_->cancel();
-        // one last check to go
-        if (platform_motor_control_enabled_ && platform_armed_ && sm_active_phase_ == ENABLED) {
-            controller_start_time_ = timestamp_.load();
-            sm_active_phase_ = RUNNING;
-        }
-    }
-    start_countdown_counter_++;
 }
 
 void MpcRunner::declareParameters() {
@@ -232,6 +168,23 @@ void MpcRunner::dumpParameters() {
     // MpcController
     get_parameter("mpc_config_path", node_params_.mpc_config_path);
     get_parameter("mpc_type", node_params_.mpc_type);
+}
+
+void MpcRunner::timerStartCountdownCallback() {
+    if (start_countdown_counter_ == 0) {
+        RCLCPP_WARN(get_logger(), "MPC Controller will start in...");
+    }
+    RCLCPP_WARN(get_logger(), "%ld...", get_parameter("start_countdown_limit").as_int() - start_countdown_counter_);
+
+    if (start_countdown_counter_ >= get_parameter("start_countdown_limit").as_int()) {
+        start_countdown_timer_->cancel();
+        // one last check to go
+        if (platform_motor_control_enabled_ && platform_armed_ && sm_active_phase_ == ENABLED) {
+            controller_start_time_ = timestamp_.load();
+            sm_active_phase_ = RUNNING;
+        }
+    }
+    start_countdown_counter_++;
 }
 
 bool MpcRunner::initializeMpcController(std::string& message) {
@@ -312,19 +265,57 @@ void MpcRunner::computeControls() {
     }
 }
 
+bool MpcRunner::smEnable(std::string& message) {
+    // Check that MicroRTPS Agent is publishing
+    if (local_position_subs_->get_publisher_count() == 0 || attitude_subs_->get_publisher_count() == 0 ||
+        angular_velocity_subs_->get_publisher_count() == 0) {
+        message = "Cannot enable MPC Controller. Check MicroRTPS Agent is running.";
+        return false;
+    }
+
+    // Check PX4 is running
+    for (int i = 0; i < state_.size(); ++i) {
+        if (state_(i) == 0) {
+            message = "Cannot enable MPC Controller. Check PX4 is publishing the platform state.";
+            return false;
+        }
+    }
+
+    dumpParameters();
+
+    if (!initializeMpcController(message)) {
+        return false;
+    }
+
+    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 10.0);
+    arm();
+
+    return true;
+}
+
+bool MpcRunner::smStart(std::string& message) {
+    if (!platform_armed_) {
+        message = "Arm the platform before starting the controller";
+        return false;
+    }
+    if (!platform_motor_control_enabled_) {
+        message = "The platform must be in motor control mode to start the controller";
+        return false;
+    }
+    return true;
+}
+
+bool MpcRunner::smDisable(std::string& message) {
+    // Pos Ctl
+    publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 3);
+
+    return true;
+}
+
 void MpcRunner::arm() const {
     publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
 
     RCLCPP_INFO(get_logger(), "Arm command sent");
-}
-
-void MpcRunner::disablingProcedure() {
-    RCLCPP_WARN(get_logger(), "MPC Controller. DISABLING");
-    // Change to a safe flight mode
-
-    // If all safety checks are correct, change flihgt mode, arm and start mission
-    // running_controller_ = false;
-    RCLCPP_WARN(get_logger(), "MPC Controller state: DISABLED");
 }
 
 void MpcRunner::disarm() const {

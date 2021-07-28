@@ -135,7 +135,6 @@ class MpcRunner : public ControllerAbstract {
     void disarm() const;
     void publishVehicleCommand(uint16_t command, float param1 = 0.0, float param2 = 0.0) const;
 
-    void disablingProcedure();
 };
 }  // namespace eagle_mpc_ros2
 #endif
