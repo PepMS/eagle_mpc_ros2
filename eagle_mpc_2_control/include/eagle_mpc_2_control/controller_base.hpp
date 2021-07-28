@@ -36,34 +36,36 @@
 #include "eagle_mpc_2_control/state_pub_sub.hpp"
 
 class ControllerAbstract : public StatePubSub {
- public:
-  explicit ControllerAbstract(const std::string& node_name);
-  virtual ~ControllerAbstract();
+    public:
+    explicit ControllerAbstract(const std::string& node_name);
+    virtual ~ControllerAbstract();
 
- protected:
-  // Other subscribers
-  rclcpp::Subscription<px4_msgs::msg::VehicleControlMode>::SharedPtr ctrl_mode_subs_;
+    protected:
+    // Other subscribers
+    rclcpp::Subscription<px4_msgs::msg::VehicleControlMode>::SharedPtr ctrl_mode_subs_;
 
-  // Publishers
-  rclcpp::Publisher<px4_msgs::msg::ActuatorDirectControl>::SharedPtr actuator_direct_control_pub_;
+    // Publishers
+    rclcpp::Publisher<px4_msgs::msg::ActuatorDirectControl>::SharedPtr actuator_direct_control_pub_;
 
-  // State subscribers callbacks
-  void vehicleCtrlModeCallback(const px4_msgs::msg::VehicleControlMode::UniquePtr msg);
+    // State subscribers callbacks
+    void vehicleCtrlModeCallback(const px4_msgs::msg::VehicleControlMode::SharedPtr msg);
+    virtual void handleVehicleCtrlMode(const px4_msgs::msg::VehicleControlMode::SharedPtr msg);
 
-  // Publishers timer callback
-  void timerComputeControlsCallback();
-  virtual void computeControls() = 0;
-  virtual void publishControls();
+    // Publishers timer callback
+    void timerComputeControlsCallback();
+    virtual void computeControls() = 0;
+    virtual void publishControls();
 
-  // Timer publishers
-  rclcpp::TimerBase::SharedPtr compute_controls_timer_;
+    // Timer publishers
+    rclcpp::TimerBase::SharedPtr compute_controls_timer_;
 
-  // Message to publish motor commands
-  px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
+    // Message to publish motor commands
+    px4_msgs::msg::ActuatorDirectControl actuator_direct_control_msg_;
 
-  // Motor speed commands in range [-1, 1]
-  Eigen::VectorXd actuator_normalized_;
-  bool motor_control_mode_enabled_;
+    // Motor speed commands in range [-1, 1]
+    Eigen::VectorXd actuator_normalized_;
+    bool platform_motor_control_enabled_;
+    bool platform_armed_;
 };
 
 #endif
