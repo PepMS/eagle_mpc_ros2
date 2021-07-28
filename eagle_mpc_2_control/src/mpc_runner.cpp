@@ -187,6 +187,7 @@ void MpcRunner::timerStartCountdownCallback() {
         start_countdown_timer_->cancel();
         // one last check to go
         if (platform_motor_control_enabled_ && platform_armed_ && sm_active_phase_ == ENABLED) {
+            controller_start_time_ = timestamp_.load();
             sm_active_phase_ = RUNNING;
         }
     }
