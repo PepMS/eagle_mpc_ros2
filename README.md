@@ -1,4 +1,4 @@
-# Eagle MPC - ROS2
+# Eagle MPC - ROS2 (WIP)
 
 This repo was initially considered to implement an MPC controller along with PX4 firmware (hence its name).
 However, this has evolved to the more general case where any controller outputting motor thrusts (or motor speed) can be implemented.
